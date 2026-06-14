@@ -3,16 +3,13 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { ChampAdresse } from './ChampAdresse';
 import { MessageEtat } from './MessageEtat';
 import type { EtatChargement } from '../types/EtatChargement';
-import type { ModeCarte } from '../types/ModeCarte';
 
 type ProprietesPanneauRecherche = {
   departTexte: string;
   destinationTexte: string;
   etatRecherche: EtatChargement;
   messageRecherche: string | null;
-  modeCarte: ModeCarte;
   recherchePossible: boolean;
-  basculerModeCarte: () => void;
   definirDepartTexte: (valeur: string) => void;
   definirDestinationTexte: (valeur: string) => void;
   rechercherItineraire: () => void;
@@ -23,9 +20,7 @@ export function PanneauRecherche({
   destinationTexte,
   etatRecherche,
   messageRecherche,
-  modeCarte,
   recherchePossible,
-  basculerModeCarte,
   definirDepartTexte,
   definirDestinationTexte,
   rechercherItineraire,
@@ -34,26 +29,24 @@ export function PanneauRecherche({
 
   return (
     <View style={styles.panneau}>
-      <View style={styles.entete}>
-        <Text style={styles.titre}>Itineraire</Text>
-        <Pressable onPress={basculerModeCarte} style={styles.boutonMode}>
-          <Text style={styles.texteMode}>
-            {modeCarte === 'clair' ? 'Sombre' : 'Clair'}
-          </Text>
-        </Pressable>
-      </View>
+      <Text style={styles.titre}>Nouveau trajet</Text>
+      <View style={styles.formulaire}>
       <ChampAdresse
         libelle="Depart"
         placeholder="Adresse de depart"
         surChangement={definirDepartTexte}
+        typeChamp="depart"
         valeur={departTexte}
       />
+        <View style={styles.separateur} />
       <ChampAdresse
         libelle="Destination"
         placeholder="Adresse de destination"
         surChangement={definirDestinationTexte}
+        typeChamp="destination"
         valeur={destinationTexte}
       />
+      </View>
       <Pressable
         disabled={!recherchePossible || chargement}
         onPress={rechercherItineraire}
@@ -73,36 +66,40 @@ export function PanneauRecherche({
 
 const styles = StyleSheet.create({
   panneau: {
-    backgroundColor: '#ffffff',
-    gap: 12,
-    padding: 16,
-  },
-  entete: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    backgroundColor: 'rgba(255,255,255,0.92)',
+    borderColor: 'rgba(255,255,255,0.74)',
+    borderRadius: 24,
+    borderWidth: 1,
+    gap: 10,
+    padding: 14,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.16,
+    shadowRadius: 28,
+    elevation: 16,
   },
   titre: {
-    color: '#111827',
-    fontSize: 15,
-    fontWeight: '700',
+    color: '#0f172a',
+    fontSize: 17,
+    fontWeight: '900',
   },
-  boutonMode: {
-    borderColor: '#d1d5db',
-    borderRadius: 8,
+  formulaire: {
+    backgroundColor: 'rgba(248,250,252,0.86)',
+    borderColor: 'rgba(203,213,225,0.78)',
+    borderRadius: 18,
     borderWidth: 1,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
+    gap: 10,
+    padding: 12,
   },
-  texteMode: {
-    color: '#374151',
-    fontSize: 13,
-    fontWeight: '600',
+  separateur: {
+    backgroundColor: 'rgba(15,23,42,0.08)',
+    height: 1,
+    marginLeft: 44,
   },
   bouton: {
     alignItems: 'center',
-    backgroundColor: '#111827',
-    borderRadius: 8,
+    backgroundColor: '#13b6d8',
+    borderRadius: 22,
     minHeight: 44,
     justifyContent: 'center',
   },

@@ -99,21 +99,44 @@ export function Carte({
       />
       <GeoJSONSource id="itineraire" data={geoJsonItineraire}>
         <Layer
-          id="halo-itineraire"
+          id="halo-exterieur-itineraire"
           type="line"
+          layout={{
+            'line-cap': 'round',
+            'line-join': 'round',
+          }}
           paint={{
-            'line-blur': 10,
-            'line-color': '#22d3ee',
-            'line-opacity': 0.33,
-            'line-width': 48,
+            'line-blur': 4.8,
+            'line-color': 'rgba(34,211,238,0.2)',
+            'line-opacity': 0.46,
+            'line-width': 22,
+          }}
+        />
+        <Layer
+          id="halo-interieur-itineraire"
+          type="line"
+          layout={{
+            'line-cap': 'round',
+            'line-join': 'round',
+          }}
+          paint={{
+            'line-blur': 1.6,
+            'line-color': 'rgba(34,211,238,0.36)',
+            'line-opacity': 0.62,
+            'line-width': 14,
           }}
         />
         <Layer
           id="trace-itineraire"
           type="line"
+          layout={{
+            'line-cap': 'round',
+            'line-join': 'round',
+          }}
           paint={{
-            'line-color': '#22d3ee',
-            'line-width': 22,
+            'line-color': '#22D3EE',
+            'line-opacity': 0.99,
+            'line-width': 7,
           }}
         />
       </GeoJSONSource>

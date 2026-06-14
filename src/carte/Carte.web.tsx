@@ -107,21 +107,39 @@ export function Carte({
       if (!carte.getSource('itineraire')) {
         carte.addSource('itineraire', { type: 'geojson', data: donnees });
         carte.addLayer({
-          id: 'halo-itineraire',
+          id: 'halo-exterieur-itineraire',
           type: 'line',
           source: 'itineraire',
+          layout: { 'line-cap': 'round', 'line-join': 'round' },
           paint: {
-            'line-blur': 10,
-            'line-color': '#22d3ee',
-            'line-opacity': 0.33,
-            'line-width': 48,
+            'line-blur': 4.8,
+            'line-color': 'rgba(34,211,238,0.2)',
+            'line-opacity': 0.46,
+            'line-width': 22,
+          },
+        });
+        carte.addLayer({
+          id: 'halo-interieur-itineraire',
+          type: 'line',
+          source: 'itineraire',
+          layout: { 'line-cap': 'round', 'line-join': 'round' },
+          paint: {
+            'line-blur': 1.6,
+            'line-color': 'rgba(34,211,238,0.36)',
+            'line-opacity': 0.62,
+            'line-width': 14,
           },
         });
         carte.addLayer({
           id: 'trace-itineraire',
           type: 'line',
           source: 'itineraire',
-          paint: { 'line-color': '#22d3ee', 'line-width': 22 },
+          layout: { 'line-cap': 'round', 'line-join': 'round' },
+          paint: {
+            'line-color': '#22D3EE',
+            'line-opacity': 0.99,
+            'line-width': 7,
+          },
         });
         return;
       }
