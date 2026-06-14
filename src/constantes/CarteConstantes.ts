@@ -1,7 +1,9 @@
+import { CLE_MAPTILER } from './VariablesEnvironnement';
 import type { Coordonnees } from '../types/Coordonnees';
 
-export const STYLE_CARTE =
-  'https://demotiles.maplibre.org/style.json';
+export const STYLE_CARTE = CLE_MAPTILER
+  ? `https://api.maptiler.com/maps/streets-v2/style.json?key=${CLE_MAPTILER}`
+  : 'https://demotiles.maplibre.org/style.json';
 
 export const CENTRE_CARTE_INITIAL: Coordonnees = {
   longitude: 2.3522,
