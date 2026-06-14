@@ -64,6 +64,7 @@ export function EcranCarte() {
           destination={recherche.destination}
           itineraire={recherche.itineraire}
           modeCarte={modeCarte}
+          navigationPleinEcran={navigationPleinEcran}
           positionUtilisateur={positionUtilisateur}
         />
         <View style={styles.banniereFlottante}>
@@ -89,6 +90,8 @@ export function EcranCarte() {
                     rechercherItineraire={rechercherDepuisPanneauTrajet}
                     selectionnerDepart={recherche.selectionnerDepart}
                     selectionnerDestination={recherche.selectionnerDestination}
+                    viderDepart={recherche.viderDepart}
+                    viderDestination={recherche.viderDestination}
                   />
                 ) : null
               }
@@ -128,9 +131,13 @@ const styles = StyleSheet.create({
   page: {
     backgroundColor: '#0f172a',
     flex: 1,
+    overflow: 'hidden',
+    width: '100%',
   },
   conteneurCarte: {
     flex: 1,
+    overflow: 'hidden',
+    width: '100%',
   },
   banniereFlottante: {
     elevation: 1000,

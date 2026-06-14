@@ -70,7 +70,7 @@ export async function rechercherSuggestionsAdresse(
   const parametres = new URLSearchParams({
     q: recherche,
     format: 'jsonv2',
-    limit: '8',
+    limit: '5',
     addressdetails: '1',
     'accept-language': 'fr',
   });

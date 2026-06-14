@@ -58,7 +58,7 @@ export function useSuggestionsAdresse(
             setChargement(false);
           }
         });
-    }, 400);
+    }, 800);
 
     return () => {
       clearTimeout(delai);

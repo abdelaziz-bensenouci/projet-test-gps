@@ -1,5 +1,5 @@
 import { Feather } from '@expo/vector-icons';
-import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 type ProprietesChampAdresse = {
   libelle: string;
@@ -7,6 +7,7 @@ type ProprietesChampAdresse = {
   placeholder: string;
   typeChamp: 'depart' | 'destination';
   surChangement: (valeur: string) => void;
+  surVider?: () => void;
   surFocus?: () => void;
 };
 
@@ -16,8 +17,11 @@ export function ChampAdresse({
   placeholder,
   typeChamp,
   surChangement,
+  surVider,
   surFocus,
 }: ProprietesChampAdresse) {
+  const afficherVider = valeur.trim().length > 0 && Boolean(surVider);
+
   return (
     <View style={styles.conteneur}>
       <View
@@ -34,16 +38,29 @@ export function ChampAdresse({
       </View>
       <View style={styles.zoneTexte}>
         <Text style={styles.libelle}>{libelle}</Text>
-        <TextInput
-          autoCapitalize="none"
-          autoCorrect={false}
-          onChangeText={surChangement}
-          onFocus={surFocus}
-          placeholder={placeholder}
-          placeholderTextColor="#657783"
-          style={styles.champ}
-          value={valeur}
-        />
+        <View style={styles.ligneChamp}>
+          <TextInput
+            autoCapitalize="none"
+            autoCorrect={false}
+            onChangeText={surChangement}
+            onFocus={surFocus}
+            placeholder={placeholder}
+            placeholderTextColor="#657783"
+            style={styles.champ}
+            value={valeur}
+          />
+          {afficherVider ? (
+            <Pressable
+              accessibilityLabel={`Vider le champ ${libelle.toLowerCase()}`}
+              accessibilityRole="button"
+              hitSlop={10}
+              onPress={surVider}
+              style={styles.boutonVider}
+            >
+              <Feather color="#EF4444" name="x" size={15} />
+            </Pressable>
+          ) : null}
+        </View>
       </View>
     </View>
   );
@@ -79,9 +96,24 @@ const styles = StyleSheet.create({
   },
   champ: {
     color: '#1F2D38',
+    flex: 1,
     fontSize: 15,
     fontWeight: '900',
     minHeight: 28,
     padding: 0,
+  },
+  boutonVider: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(239,68,68,0.1)',
+    borderRadius: 999,
+    height: 22,
+    justifyContent: 'center',
+    width: 22,
+  },
+  ligneChamp: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+    minHeight: 28,
   },
 });

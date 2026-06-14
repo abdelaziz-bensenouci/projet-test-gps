@@ -18,6 +18,8 @@ type RechercheItineraire = {
   recherchePossible: boolean;
   definirDepartTexte: (valeur: string) => void;
   definirDestinationTexte: (valeur: string) => void;
+  viderDepart: () => void;
+  viderDestination: () => void;
   selectionnerDepart: (adresse: AdresseGeocodee) => void;
   selectionnerDestination: (adresse: AdresseGeocodee) => void;
   rechercherItineraire: () => Promise<void>;
@@ -69,6 +71,18 @@ export function useRechercheItineraire(): RechercheItineraire {
   function selectionnerDestination(adresse: AdresseGeocodee) {
     setDestinationSelectionnee(adresse);
     definirDestinationTexte(adresse.libelle);
+  }
+
+  function viderDepart() {
+    setDepartTexte('');
+    setDepartSelectionne(null);
+    setDepart(null);
+  }
+
+  function viderDestination() {
+    definirDestinationTexte('');
+    setDestinationSelectionnee(null);
+    setDestination(null);
   }
 
   async function rechercherItineraire() {
@@ -185,6 +199,8 @@ export function useRechercheItineraire(): RechercheItineraire {
     recherchePossible,
     definirDepartTexte,
     definirDestinationTexte: definirTexteDestination,
+    viderDepart,
+    viderDestination,
     selectionnerDepart,
     selectionnerDestination,
     rechercherItineraire,

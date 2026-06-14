@@ -22,6 +22,8 @@ type ProprietesPanneauTrajet = {
   fermer: () => void;
   definirDepartTexte: (valeur: string) => void;
   definirDestinationTexte: (valeur: string) => void;
+  viderDepart: () => void;
+  viderDestination: () => void;
   selectionnerDepart: (adresse: AdresseGeocodee) => void;
   selectionnerDestination: (adresse: AdresseGeocodee) => void;
   rechercherItineraire: () => void;
@@ -38,6 +40,8 @@ export function PanneauTrajet({
   fermer,
   definirDepartTexte,
   definirDestinationTexte,
+  viderDepart,
+  viderDestination,
   selectionnerDepart,
   selectionnerDestination,
   rechercherItineraire,
@@ -69,6 +73,14 @@ export function PanneauTrajet({
     selectionnerDestination(adresse);
     setChampActif(null);
   };
+  const viderChampDepart = () => {
+    viderDepart();
+    setChampActif(null);
+  };
+  const viderChampDestination = () => {
+    viderDestination();
+    setChampActif(null);
+  };
 
   return (
     <View style={[styles.carte, integre && styles.carteIntegree]}>
@@ -90,6 +102,7 @@ export function PanneauTrajet({
           placeholder="Position actuelle"
           surChangement={definirDepartTexte}
           surFocus={() => setChampActif('depart')}
+          surVider={viderChampDepart}
           typeChamp="depart"
           valeur={departTexte}
         />
@@ -109,6 +122,7 @@ export function PanneauTrajet({
           placeholder="Saisir une adresse"
           surChangement={definirDestinationTexte}
           surFocus={() => setChampActif('destination')}
+          surVider={viderChampDestination}
           typeChamp="destination"
           valeur={destinationTexte}
         />

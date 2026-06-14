@@ -9,5 +9,6 @@ export type ProprietesCarte = {
   itineraire: Itineraire | null;
   cleRecentrage: number;
   modeCarte: ModeCarte;
+  navigationPleinEcran: boolean;
   positionUtilisateur: Coordonnees | null;
 };

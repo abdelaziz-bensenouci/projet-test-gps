@@ -5,11 +5,14 @@ import type { CameraRef } from '@maplibre/maplibre-react-native';
 import {
   CENTRE_CARTE_INITIAL,
   CENTRAGE_TRACE_ACTIF,
-  OFFSET_VERTICAL_NAVIGATION,
-  PITCH_NAVIGATION,
+  OFFSET_VERTICAL_NAVIGATION_PLEIN_ECRAN,
+  OFFSET_VERTICAL_NAVIGATION_REDUIT,
+  PITCH_NAVIGATION_PLEIN_ECRAN,
+  PITCH_NAVIGATION_REDUIT,
   obtenirStyleCarte,
   ZOOM_CARTE_INITIAL,
-  ZOOM_NAVIGATION,
+  ZOOM_NAVIGATION_PLEIN_ECRAN,
+  ZOOM_NAVIGATION_REDUIT,
 } from '../constantes/CarteConstantes';
 import { calculerBearing, versLngLat } from '../utilitaires/coordonnees';
 import { creerGeoJsonItineraire } from '../utilitaires/geojson';
@@ -26,11 +29,16 @@ export function Carte({
   destination,
   itineraire,
   modeCarte,
+  navigationPleinEcran,
   positionUtilisateur,
 }: ProprietesCarte) {
   const cameraRef = useRef<CameraRef>(null);
   const [traceAffiche, setTraceAffiche] = useState<Coordonnees[]>([]);
-  const styleCarte = useMemo(() => obtenirStyleCarte(modeCarte), [modeCarte]);
+  const navigationActive = Boolean(itineraire);
+  const styleCarte = useMemo(
+    () => obtenirStyleCarte(modeCarte, navigationActive),
+    [modeCarte, navigationActive],
+  );
   const geoJsonItineraire = useMemo(
     () => creerGeoJsonItineraire(itineraire, traceAffiche),
     [itineraire, traceAffiche],
@@ -77,18 +85,18 @@ export function Carte({
       cameraRef.current?.easeTo({
         center: versLngLat(positionUtilisateur ?? depart?.coordonnees ?? premierPoint),
         bearing: calculerBearing(premierPoint, deuxiemePoint),
-        pitch: PITCH_NAVIGATION,
-        zoom: ZOOM_NAVIGATION,
+        pitch: obtenirPitchNavigation(navigationPleinEcran),
+        zoom: obtenirZoomNavigation(navigationPleinEcran),
         padding: {
-          top: OFFSET_VERTICAL_NAVIGATION,
+          top: obtenirOffsetVerticalNavigation(navigationPleinEcran),
           right: 0,
           bottom: 0,
           left: 0,
         },
-        duration: 600,
+        duration: 760,
       });
     }
-  }, [depart, itineraire, positionUtilisateur]);
+  }, [depart, itineraire, navigationPleinEcran, positionUtilisateur]);
 
   useEffect(() => {
     if (!positionUtilisateur || cleRecentrage === 0) {
@@ -98,10 +106,10 @@ export function Carte({
     cameraRef.current?.easeTo({
       center: versLngLat(positionUtilisateur),
       duration: 500,
-      pitch: itineraire ? PITCH_NAVIGATION : 0,
-      zoom: itineraire ? ZOOM_NAVIGATION : 16,
+      pitch: itineraire ? obtenirPitchNavigation(navigationPleinEcran) : 0,
+      zoom: itineraire ? obtenirZoomNavigation(navigationPleinEcran) : 16,
     });
-  }, [cleRecentrage, itineraire, positionUtilisateur]);
+  }, [cleRecentrage, itineraire, navigationPleinEcran, positionUtilisateur]);
 
   return (
     <Map attribution mapStyle={styleCarte} style={stylesCarte.carte}>
@@ -122,9 +130,9 @@ export function Carte({
           }}
           paint={{
             'line-blur': 4.8,
-            'line-color': 'rgba(34,211,238,0.2)',
-            'line-opacity': 0.46,
-            'line-width': 22,
+            'line-color': 'rgba(34,211,238,0.24)',
+            'line-opacity': 0.54,
+            'line-width': 24,
           }}
         />
         <Layer
@@ -136,9 +144,9 @@ export function Carte({
           }}
           paint={{
             'line-blur': 1.6,
-            'line-color': 'rgba(34,211,238,0.36)',
-            'line-opacity': 0.62,
-            'line-width': 14,
+            'line-color': 'rgba(34,211,238,0.42)',
+            'line-opacity': 0.7,
+            'line-width': 15,
           }}
         />
         <Layer
@@ -151,7 +159,7 @@ export function Carte({
           paint={{
             'line-color': '#22D3EE',
             'line-opacity': 0.99,
-            'line-width': 7,
+            'line-width': 8,
           }}
         />
       </GeoJSONSource>
@@ -178,4 +186,18 @@ export function Carte({
 
 function estDepartPositionActuelle(libelle: string) {
   return libelle.trim().toLowerCase() === 'position actuelle';
+}
+
+function obtenirPitchNavigation(pleinEcran: boolean) {
+  return pleinEcran ? PITCH_NAVIGATION_PLEIN_ECRAN : PITCH_NAVIGATION_REDUIT;
+}
+
+function obtenirZoomNavigation(pleinEcran: boolean) {
+  return pleinEcran ? ZOOM_NAVIGATION_PLEIN_ECRAN : ZOOM_NAVIGATION_REDUIT;
+}
+
+function obtenirOffsetVerticalNavigation(pleinEcran: boolean) {
+  return pleinEcran
+    ? OFFSET_VERTICAL_NAVIGATION_PLEIN_ECRAN
+    : OFFSET_VERTICAL_NAVIGATION_REDUIT;
 }
