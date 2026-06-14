@@ -22,6 +22,7 @@ type RechercheItineraire = {
   rechercherItineraireDepuisPosition: (
     positionDepart: Coordonnees | null,
   ) => Promise<void>;
+  arreterItineraire: () => void;
 };
 
 export function useRechercheItineraire(): RechercheItineraire {
@@ -124,6 +125,14 @@ export function useRechercheItineraire(): RechercheItineraire {
     }
   }
 
+  function arreterItineraire() {
+    setDepart(null);
+    setDestination(null);
+    setItineraire(null);
+    setEtatRecherche('repos');
+    setMessageRecherche(null);
+  }
+
   return {
     departTexte,
     destinationTexte,
@@ -137,5 +146,6 @@ export function useRechercheItineraire(): RechercheItineraire {
     definirDestinationTexte,
     rechercherItineraire,
     rechercherItineraireDepuisPosition,
+    arreterItineraire,
   };
 }

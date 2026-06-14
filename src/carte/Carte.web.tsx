@@ -98,63 +98,36 @@ export function Carte({
     }
 
     const appliquerTrace = () => {
-      const donnees: GeoJSON.Feature<GeoJSON.LineString> = {
-        type: 'Feature',
-        properties: {},
-        geometry: {
-          type: 'LineString',
-          coordinates: traceAffiche.map(versLngLat),
-        },
+      const donnees: GeoJSON.FeatureCollection<GeoJSON.LineString> = {
+        type: 'FeatureCollection',
+        features: traceAffiche.length >= 2
+          ? [
+              {
+                type: 'Feature',
+                properties: {},
+                geometry: {
+                  type: 'LineString',
+                  coordinates: traceAffiche.map(versLngLat),
+                },
+              },
+            ]
+          : [],
       };
 
       if (!carte.getSource('itineraire')) {
         carte.addSource('itineraire', { type: 'geojson', data: donnees });
-        carte.addLayer({
-          id: 'halo-exterieur-itineraire',
-          type: 'line',
-          source: 'itineraire',
-          layout: { 'line-cap': 'round', 'line-join': 'round' },
-          paint: {
-            'line-blur': 4.8,
-            'line-color': 'rgba(34,211,238,0.2)',
-            'line-opacity': 0.46,
-            'line-width': 22,
-          },
-        });
-        carte.addLayer({
-          id: 'halo-interieur-itineraire',
-          type: 'line',
-          source: 'itineraire',
-          layout: { 'line-cap': 'round', 'line-join': 'round' },
-          paint: {
-            'line-blur': 1.6,
-            'line-color': 'rgba(34,211,238,0.36)',
-            'line-opacity': 0.62,
-            'line-width': 14,
-          },
-        });
-        carte.addLayer({
-          id: 'trace-itineraire',
-          type: 'line',
-          source: 'itineraire',
-          layout: { 'line-cap': 'round', 'line-join': 'round' },
-          paint: {
-            'line-color': '#22D3EE',
-            'line-opacity': 0.99,
-            'line-width': 7,
-          },
-        });
-        return;
+      } else {
+        const source = carte.getSource('itineraire') as maplibregl.GeoJSONSource;
+        source.setData(donnees);
       }
 
-      const source = carte.getSource('itineraire') as maplibregl.GeoJSONSource;
-      source.setData(donnees);
+      ajouterCouchesTrace(carte);
     };
 
     if (carte.isStyleLoaded()) {
       appliquerTrace();
     } else {
-      carte.once('load', appliquerTrace);
+      carte.once('styledata', appliquerTrace);
     }
   }, [traceAffiche, styleCarte]);
 
@@ -285,6 +258,52 @@ function obtenirUrlMarqueurUtilisateur() {
   }
 
   return source.uri ?? '';
+}
+
+function ajouterCouchesTrace(carte: maplibregl.Map) {
+  if (!carte.getLayer('halo-exterieur-itineraire')) {
+    carte.addLayer({
+      id: 'halo-exterieur-itineraire',
+      type: 'line',
+      source: 'itineraire',
+      layout: { 'line-cap': 'round', 'line-join': 'round' },
+      paint: {
+        'line-blur': 4.8,
+        'line-color': 'rgba(34,211,238,0.2)',
+        'line-opacity': 0.46,
+        'line-width': 22,
+      },
+    });
+  }
+
+  if (!carte.getLayer('halo-interieur-itineraire')) {
+    carte.addLayer({
+      id: 'halo-interieur-itineraire',
+      type: 'line',
+      source: 'itineraire',
+      layout: { 'line-cap': 'round', 'line-join': 'round' },
+      paint: {
+        'line-blur': 1.6,
+        'line-color': 'rgba(34,211,238,0.36)',
+        'line-opacity': 0.62,
+        'line-width': 14,
+      },
+    });
+  }
+
+  if (!carte.getLayer('trace-itineraire')) {
+    carte.addLayer({
+      id: 'trace-itineraire',
+      type: 'line',
+      source: 'itineraire',
+      layout: { 'line-cap': 'round', 'line-join': 'round' },
+      paint: {
+        'line-color': '#22D3EE',
+        'line-opacity': 0.99,
+        'line-width': 7,
+      },
+    });
+  }
 }
 
 function creerMarqueur(
