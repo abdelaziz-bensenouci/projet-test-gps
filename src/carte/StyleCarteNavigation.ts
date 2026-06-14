@@ -126,8 +126,8 @@ export function creerStyleCarteNavigation(
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
           'line-color': palette.routeSecondary,
-          'line-opacity': 0.48,
-          'line-width': ['interpolate', ['linear'], ['zoom'], 10, 0.8, 14, 2.2, 18, 6],
+          'line-opacity': 0.7,
+          'line-width': ['interpolate', ['linear'], ['zoom'], 10, 1.2, 14, 3.2, 18, 8],
         },
       },
       {
@@ -139,8 +139,8 @@ export function creerStyleCarteNavigation(
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
           'line-color': palette.routeTertiary,
-          'line-opacity': 0.28,
-          'line-width': ['interpolate', ['linear'], ['zoom'], 11, 0.5, 14, 1.4, 18, 3.2],
+          'line-opacity': 0.62,
+          'line-width': ['interpolate', ['linear'], ['zoom'], 11, 1, 14, 2.6, 18, 6],
         },
       },
       {
@@ -148,13 +148,13 @@ export function creerStyleCarteNavigation(
         type: 'line',
         source: 'openmaptiles',
         'source-layer': 'transportation',
-        minzoom: 16,
-        filter: ['==', ['get', 'class'], 'minor'],
+        minzoom: 13,
+        filter: ['in', ['get', 'class'], ['literal', ['minor', 'service', 'track', 'path']]],
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
           'line-color': palette.routeMinor,
-          'line-opacity': 0.08,
-          'line-width': ['interpolate', ['linear'], ['zoom'], 16, 0.4, 18, 1.4],
+          'line-opacity': 0.48,
+          'line-width': ['interpolate', ['linear'], ['zoom'], 13, 0.7, 15, 1.6, 18, 3.8],
         },
       },
       {

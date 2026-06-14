@@ -24,3 +24,5 @@ export const ZOOM_NAVIGATION = 17;
 export const PITCH_NAVIGATION = 55;
 
 export const OFFSET_VERTICAL_NAVIGATION = 260;
+
+export const CENTRAGE_TRACE_ACTIF = true;

@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Camera, GeoJSONSource, Layer, Map } from '@maplibre/maplibre-react-native';
 import type { CameraRef } from '@maplibre/maplibre-react-native';
 
 import {
   CENTRE_CARTE_INITIAL,
+  CENTRAGE_TRACE_ACTIF,
   OFFSET_VERTICAL_NAVIGATION,
   PITCH_NAVIGATION,
   obtenirStyleCarte,
@@ -12,9 +13,11 @@ import {
 } from '../constantes/CarteConstantes';
 import { calculerBearing, versLngLat } from '../utilitaires/coordonnees';
 import { creerGeoJsonItineraire } from '../utilitaires/geojson';
+import { adapterTraceSurAxesRoutiers } from './centrageTrace/adapterTraceSurAxesRoutiers';
 import { MarqueurCarte } from './MarqueurCarte';
 import { stylesCarte } from './stylesCarte';
 import type { ProprietesCarte } from './typesCarte';
+import type { Coordonnees } from '../types/Coordonnees';
 
 export function Carte({
   depart,
@@ -24,11 +27,44 @@ export function Carte({
   positionUtilisateur,
 }: ProprietesCarte) {
   const cameraRef = useRef<CameraRef>(null);
+  const [traceAffiche, setTraceAffiche] = useState<Coordonnees[]>([]);
   const styleCarte = useMemo(() => obtenirStyleCarte(modeCarte), [modeCarte]);
   const geoJsonItineraire = useMemo(
-    () => creerGeoJsonItineraire(itineraire),
-    [itineraire],
+    () => creerGeoJsonItineraire(itineraire, traceAffiche),
+    [itineraire, traceAffiche],
   );
+
+  useEffect(() => {
+    let actif = true;
+    const pointsOsrm = itineraire?.coordonnees ?? [];
+
+    async function preparerTraceAffiche() {
+      if (!CENTRAGE_TRACE_ACTIF || pointsOsrm.length < 2) {
+        setTraceAffiche(pointsOsrm);
+        return;
+      }
+
+      try {
+        const traceRecentree = await adapterTraceSurAxesRoutiers(pointsOsrm);
+
+        if (actif) {
+          setTraceAffiche(
+            traceRecentree.length >= 2 ? traceRecentree : pointsOsrm,
+          );
+        }
+      } catch {
+        if (actif) {
+          setTraceAffiche(pointsOsrm);
+        }
+      }
+    }
+
+    void preparerTraceAffiche();
+
+    return () => {
+      actif = false;
+    };
+  }, [itineraire]);
 
   useEffect(() => {
     const points = itineraire?.coordonnees ?? [];

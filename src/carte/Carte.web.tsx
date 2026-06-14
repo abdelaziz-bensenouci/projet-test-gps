@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 import {
   CENTRE_CARTE_INITIAL,
+  CENTRAGE_TRACE_ACTIF,
   OFFSET_VERTICAL_NAVIGATION,
   PITCH_NAVIGATION,
   obtenirStyleCarte,
@@ -11,7 +12,9 @@ import {
   ZOOM_NAVIGATION,
 } from '../constantes/CarteConstantes';
 import { calculerBearing, versLngLat } from '../utilitaires/coordonnees';
+import { adapterTraceSurAxesRoutiers } from './centrageTrace/adapterTraceSurAxesRoutiers';
 import type { ProprietesCarte } from './typesCarte';
+import type { Coordonnees } from '../types/Coordonnees';
 
 export function Carte({
   depart,
@@ -23,6 +26,7 @@ export function Carte({
   const conteneurRef = useRef<HTMLDivElement | null>(null);
   const carteRef = useRef<maplibregl.Map | null>(null);
   const marqueursRef = useRef<maplibregl.Marker[]>([]);
+  const [traceAffiche, setTraceAffiche] = useState<Coordonnees[]>([]);
   const styleCarte = useMemo(() => obtenirStyleCarte(modeCarte), [modeCarte]);
 
   useEffect(() => {
@@ -42,6 +46,38 @@ export function Carte({
       carteRef.current = null;
     };
   }, [positionUtilisateur]);
+
+  useEffect(() => {
+    let actif = true;
+    const pointsOsrm = itineraire?.coordonnees ?? [];
+
+    async function preparerTraceAffiche() {
+      if (!CENTRAGE_TRACE_ACTIF || pointsOsrm.length < 2) {
+        setTraceAffiche(pointsOsrm);
+        return;
+      }
+
+      try {
+        const traceRecentree = await adapterTraceSurAxesRoutiers(pointsOsrm);
+
+        if (actif) {
+          setTraceAffiche(
+            traceRecentree.length >= 2 ? traceRecentree : pointsOsrm,
+          );
+        }
+      } catch {
+        if (actif) {
+          setTraceAffiche(pointsOsrm);
+        }
+      }
+    }
+
+    void preparerTraceAffiche();
+
+    return () => {
+      actif = false;
+    };
+  }, [itineraire]);
 
   useEffect(() => {
     const carte = carteRef.current;
@@ -64,7 +100,7 @@ export function Carte({
         properties: {},
         geometry: {
           type: 'LineString',
-          coordinates: itineraire?.coordonnees.map(versLngLat) ?? [],
+          coordinates: traceAffiche.map(versLngLat),
         },
       };
 
@@ -99,7 +135,7 @@ export function Carte({
     } else {
       carte.once('load', appliquerTrace);
     }
-  }, [itineraire, styleCarte]);
+  }, [traceAffiche, styleCarte]);
 
   useEffect(() => {
     const carte = carteRef.current;
