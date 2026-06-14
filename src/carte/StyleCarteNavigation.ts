@@ -81,8 +81,8 @@ export function creerStyleCarteNavigation(): StyleSpecification | null {
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
           'line-color': '#c2cfdb',
-          'line-opacity': 0.66,
-          'line-width': ['interpolate', ['linear'], ['zoom'], 10, 1.2, 14, 3.2, 18, 8],
+          'line-opacity': 0.58,
+          'line-width': ['interpolate', ['linear'], ['zoom'], 10, 1, 14, 2.6, 18, 7],
         },
       },
       {
@@ -94,8 +94,8 @@ export function creerStyleCarteNavigation(): StyleSpecification | null {
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
           'line-color': '#b7c5d2',
-          'line-opacity': 0.58,
-          'line-width': ['interpolate', ['linear'], ['zoom'], 11, 1, 14, 2.4, 18, 6],
+          'line-opacity': 0.48,
+          'line-width': ['interpolate', ['linear'], ['zoom'], 11, 0.8, 14, 2, 18, 5],
         },
       },
       {
@@ -103,12 +103,13 @@ export function creerStyleCarteNavigation(): StyleSpecification | null {
         type: 'line',
         source: 'openmaptiles',
         'source-layer': 'transportation',
+        minzoom: 15,
         filter: ['in', ['get', 'class'], ['literal', ['minor', 'service', 'track', 'path']]],
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
           'line-color': '#a9b7c5',
-          'line-opacity': 0.42,
-          'line-width': ['interpolate', ['linear'], ['zoom'], 12, 0.7, 15, 1.8, 18, 4],
+          'line-opacity': 0.18,
+          'line-width': ['interpolate', ['linear'], ['zoom'], 15, 0.8, 18, 2.6],
         },
       },
       {

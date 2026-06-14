@@ -4,10 +4,13 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 
 import {
   CENTRE_CARTE_INITIAL,
+  OFFSET_VERTICAL_NAVIGATION,
+  PITCH_NAVIGATION,
   STYLE_CARTE,
   ZOOM_CARTE_INITIAL,
+  ZOOM_NAVIGATION,
 } from '../constantes/CarteConstantes';
-import { creerBornes, versLngLat } from '../utilitaires/coordonnees';
+import { calculerBearing, versLngLat } from '../utilitaires/coordonnees';
 import type { ProprietesCarte } from './typesCarte';
 
 export function Carte({
@@ -113,12 +116,26 @@ export function Carte({
 
   useEffect(() => {
     const carte = carteRef.current;
-    const bornes = creerBornes(itineraire?.coordonnees ?? []);
+    const points = itineraire?.coordonnees ?? [];
+    const premierPoint = points.at(0);
+    const deuxiemePoint = points.at(1);
 
-    if (carte && bornes) {
-      carte.fitBounds(bornes, { padding: 80, duration: 600 });
+    if (carte && premierPoint && deuxiemePoint) {
+      carte.easeTo({
+        center: versLngLat(positionUtilisateur ?? depart?.coordonnees ?? premierPoint),
+        bearing: calculerBearing(premierPoint, deuxiemePoint),
+        pitch: PITCH_NAVIGATION,
+        zoom: ZOOM_NAVIGATION,
+        padding: {
+          top: OFFSET_VERTICAL_NAVIGATION,
+          right: 0,
+          bottom: 0,
+          left: 0,
+        },
+        duration: 600,
+      });
     }
-  }, [itineraire]);
+  }, [depart, itineraire, positionUtilisateur]);
 
   return <div ref={conteneurRef} style={{ flex: 1 }} />;
 }

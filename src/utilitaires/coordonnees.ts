@@ -21,3 +21,30 @@ export function creerBornes(
     Math.max(...latitudes),
   ];
 }
+
+export function calculerBearing(
+  depart: Coordonnees,
+  arrivee: Coordonnees,
+): number {
+  const latitudeDepart = convertirDegresEnRadians(depart.latitude);
+  const latitudeArrivee = convertirDegresEnRadians(arrivee.latitude);
+  const deltaLongitude = convertirDegresEnRadians(
+    arrivee.longitude - depart.longitude,
+  );
+  const y = Math.sin(deltaLongitude) * Math.cos(latitudeArrivee);
+  const x =
+    Math.cos(latitudeDepart) * Math.sin(latitudeArrivee) -
+    Math.sin(latitudeDepart) *
+      Math.cos(latitudeArrivee) *
+      Math.cos(deltaLongitude);
+
+  return (convertirRadiansEnDegres(Math.atan2(y, x)) + 360) % 360;
+}
+
+function convertirDegresEnRadians(valeur: number): number {
+  return (valeur * Math.PI) / 180;
+}
+
+function convertirRadiansEnDegres(valeur: number): number {
+  return (valeur * 180) / Math.PI;
+}

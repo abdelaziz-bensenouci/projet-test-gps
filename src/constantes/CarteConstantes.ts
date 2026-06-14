@@ -14,3 +14,9 @@ export const CENTRE_CARTE_INITIAL: Coordonnees = {
 };
 
 export const ZOOM_CARTE_INITIAL = 12;
+
+export const ZOOM_NAVIGATION = 17;
+
+export const PITCH_NAVIGATION = 55;
+
+export const OFFSET_VERTICAL_NAVIGATION = 260;
