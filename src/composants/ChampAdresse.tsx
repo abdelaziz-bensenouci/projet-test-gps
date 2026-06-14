@@ -7,6 +7,7 @@ type ProprietesChampAdresse = {
   placeholder: string;
   typeChamp: 'depart' | 'destination';
   surChangement: (valeur: string) => void;
+  surFocus?: () => void;
 };
 
 export function ChampAdresse({
@@ -15,6 +16,7 @@ export function ChampAdresse({
   placeholder,
   typeChamp,
   surChangement,
+  surFocus,
 }: ProprietesChampAdresse) {
   return (
     <View style={styles.conteneur}>
@@ -36,6 +38,7 @@ export function ChampAdresse({
           autoCapitalize="none"
           autoCorrect={false}
           onChangeText={surChangement}
+          onFocus={surFocus}
           placeholder={placeholder}
           placeholderTextColor="#657783"
           style={styles.champ}

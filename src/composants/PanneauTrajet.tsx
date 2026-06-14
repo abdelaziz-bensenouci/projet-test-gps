@@ -1,38 +1,74 @@
 import { Feather } from '@expo/vector-icons';
+import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { ChampAdresse } from './ChampAdresse';
 import { MessageEtat } from './MessageEtat';
+import { useSuggestionsAdresse } from '../hooks/useSuggestionsAdresse';
+import type { AdresseGeocodee } from '../types/AdresseGeocodee';
+import type { Coordonnees } from '../types/Coordonnees';
 import type { EtatChargement } from '../types/EtatChargement';
 
 const LIEUX_FAVORIS = ['Palestro', 'Pose', 'Hoche'];
 
 type ProprietesPanneauTrajet = {
+  departTexte: string;
   destinationTexte: string;
   etatRecherche: EtatChargement;
   messageRecherche: string | null;
   positionDisponible: boolean;
+  positionUtilisateur: Coordonnees | null;
   integre?: boolean;
   fermer: () => void;
+  definirDepartTexte: (valeur: string) => void;
   definirDestinationTexte: (valeur: string) => void;
+  selectionnerDepart: (adresse: AdresseGeocodee) => void;
+  selectionnerDestination: (adresse: AdresseGeocodee) => void;
   rechercherItineraire: () => void;
 };
 
 export function PanneauTrajet({
+  departTexte,
   destinationTexte,
   etatRecherche,
   messageRecherche,
   positionDisponible,
+  positionUtilisateur,
   integre = false,
   fermer,
+  definirDepartTexte,
   definirDestinationTexte,
+  selectionnerDepart,
+  selectionnerDestination,
   rechercherItineraire,
 }: ProprietesPanneauTrajet) {
+  const [champActif, setChampActif] = useState<'depart' | 'destination' | null>(
+    null,
+  );
+  const suggestionsDepart = useSuggestionsAdresse(departTexte, {
+    actif: champActif === 'depart' && departTexte !== 'Position actuelle',
+    positionUtilisateur,
+  });
+  const suggestionsDestination = useSuggestionsAdresse(destinationTexte, {
+    actif: champActif === 'destination',
+    positionUtilisateur,
+  });
   const chargement = etatRecherche === 'chargement';
   const recherchePossible =
-    positionDisponible && destinationTexte.trim().length > 0;
+    (positionDisponible || departTexte !== 'Position actuelle') &&
+    departTexte.trim().length > 0 &&
+    destinationTexte.trim().length > 0;
   const afficherRecherche =
     destinationTexte.trim().length > 0 || Boolean(messageRecherche);
+
+  const choisirDepart = (adresse: AdresseGeocodee) => {
+    selectionnerDepart(adresse);
+    setChampActif(null);
+  };
+  const choisirDestination = (adresse: AdresseGeocodee) => {
+    selectionnerDestination(adresse);
+    setChampActif(null);
+  };
 
   return (
     <View style={[styles.carte, integre && styles.carteIntegree]}>
@@ -47,25 +83,45 @@ export function PanneauTrajet({
           <Feather color="#FFFFFF" name="x" size={18} />
         </Pressable>
       </View>
+
       <View style={styles.formulaire}>
-        <View style={styles.departFixe}>
-          <View style={styles.pastilleDepart}>
-            <Feather color="#16a6c9" name="crosshair" size={16} />
-          </View>
-          <View style={styles.zoneDepartFixe}>
-            <Text style={styles.libelleDepartFixe}>DÉPART</Text>
-            <Text style={styles.texteDepartFixe}>Position actuelle</Text>
-          </View>
-        </View>
+        <ChampAdresse
+          libelle="DÉPART"
+          placeholder="Position actuelle"
+          surChangement={definirDepartTexte}
+          surFocus={() => setChampActif('depart')}
+          typeChamp="depart"
+          valeur={departTexte}
+        />
+        {champActif === 'depart' ? (
+          <ListeSuggestions
+            aucunResultat={suggestionsDepart.aucunResultat}
+            chargement={suggestionsDepart.chargement}
+            choisirSuggestion={choisirDepart}
+            suggestions={suggestionsDepart.suggestions}
+          />
+        ) : null}
+
         <View style={styles.separateur} />
+
         <ChampAdresse
           libelle="ARRIVÉE"
           placeholder="Saisir une adresse"
           surChangement={definirDestinationTexte}
+          surFocus={() => setChampActif('destination')}
           typeChamp="destination"
           valeur={destinationTexte}
         />
+        {champActif === 'destination' ? (
+          <ListeSuggestions
+            aucunResultat={suggestionsDestination.aucunResultat}
+            chargement={suggestionsDestination.chargement}
+            choisirSuggestion={choisirDestination}
+            suggestions={suggestionsDestination.suggestions}
+          />
+        ) : null}
       </View>
+
       <View style={styles.section}>
         <Text style={styles.sectionTitre}>LIEUX FAVORIS</Text>
         <View style={styles.favoris}>
@@ -86,6 +142,7 @@ export function PanneauTrajet({
           ))}
         </View>
       </View>
+
       {afficherRecherche ? (
         <>
           <Pressable
@@ -103,6 +160,48 @@ export function PanneauTrajet({
           <MessageEtat message={messageRecherche} />
         </>
       ) : null}
+    </View>
+  );
+}
+
+function ListeSuggestions({
+  aucunResultat,
+  chargement,
+  choisirSuggestion,
+  suggestions,
+}: {
+  aucunResultat: boolean;
+  chargement: boolean;
+  choisirSuggestion: (adresse: AdresseGeocodee) => void;
+  suggestions: AdresseGeocodee[];
+}) {
+  if (chargement) {
+    return <Text style={styles.messageSuggestion}>Recherche...</Text>;
+  }
+
+  if (aucunResultat) {
+    return <Text style={styles.messageSuggestion}>Aucune suggestion.</Text>;
+  }
+
+  if (suggestions.length === 0) {
+    return null;
+  }
+
+  return (
+    <View style={styles.suggestions}>
+      {suggestions.map((suggestion) => (
+        <Pressable
+          accessibilityRole="button"
+          key={`${suggestion.libelle}-${suggestion.coordonnees.latitude}`}
+          onPress={() => choisirSuggestion(suggestion)}
+          style={styles.suggestion}
+        >
+          <Feather color="#16a6c9" name="map-pin" size={14} />
+          <Text numberOfLines={2} style={styles.texteSuggestion}>
+            {suggestion.libelle}
+          </Text>
+        </Pressable>
+      ))}
     </View>
   );
 }
@@ -150,12 +249,6 @@ const styles = StyleSheet.create({
     padding: 0,
     shadowOpacity: 0,
   },
-  departFixe: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 10,
-    minHeight: 46,
-  },
   entete: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -199,19 +292,11 @@ const styles = StyleSheet.create({
     gap: 10,
     padding: 12,
   },
-  libelleDepartFixe: {
+  messageSuggestion: {
     color: '#657783',
     fontSize: 11,
-    fontWeight: '900',
-    textTransform: 'uppercase',
-  },
-  pastilleDepart: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(22,166,201,0.1)',
-    borderRadius: 17,
-    height: 34,
-    justifyContent: 'center',
-    width: 34,
+    fontWeight: '800',
+    marginLeft: 44,
   },
   section: {
     gap: 8,
@@ -227,6 +312,27 @@ const styles = StyleSheet.create({
     height: 1,
     marginLeft: 44,
   },
+  suggestion: {
+    alignItems: 'center',
+    backgroundColor: '#F7F9FA',
+    borderColor: '#C8D8E0',
+    borderRadius: 12,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 8,
+    minHeight: 38,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+  },
+  suggestions: {
+    gap: 6,
+    marginLeft: 44,
+  },
+  texteActionFavori: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '900',
+  },
   texteBoutonCalcul: {
     color: '#FFFFFF',
     fontSize: 12,
@@ -237,24 +343,16 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '900',
   },
-  texteDepartFixe: {
+  texteSuggestion: {
     color: '#1F2D38',
-    fontSize: 15,
-    fontWeight: '900',
-    lineHeight: 22,
-  },
-  texteActionFavori: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '900',
+    flex: 1,
+    fontSize: 11,
+    fontWeight: '800',
+    lineHeight: 14,
   },
   titre: {
     color: '#1F2D38',
     fontSize: 17,
     fontWeight: '900',
-  },
-  zoneDepartFixe: {
-    flex: 1,
-    minWidth: 0,
   },
 });

@@ -76,14 +76,19 @@ export function EcranCarte() {
               panneauTrajet={
                 panneauTrajetOuvert ? (
                   <PanneauTrajet
+                    definirDepartTexte={recherche.definirDepartTexte}
                     definirDestinationTexte={recherche.definirDestinationTexte}
+                    departTexte={recherche.departTexte}
                     destinationTexte={recherche.destinationTexte}
                     etatRecherche={recherche.etatRecherche}
                     fermer={fermerPanneauTrajet}
                     integre
                     messageRecherche={recherche.messageRecherche}
                     positionDisponible={Boolean(positionUtilisateur)}
+                    positionUtilisateur={positionUtilisateur}
                     rechercherItineraire={rechercherDepuisPanneauTrajet}
+                    selectionnerDepart={recherche.selectionnerDepart}
+                    selectionnerDestination={recherche.selectionnerDestination}
                   />
                 ) : null
               }

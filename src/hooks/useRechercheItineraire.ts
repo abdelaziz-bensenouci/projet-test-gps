@@ -18,6 +18,8 @@ type RechercheItineraire = {
   recherchePossible: boolean;
   definirDepartTexte: (valeur: string) => void;
   definirDestinationTexte: (valeur: string) => void;
+  selectionnerDepart: (adresse: AdresseGeocodee) => void;
+  selectionnerDestination: (adresse: AdresseGeocodee) => void;
   rechercherItineraire: () => Promise<void>;
   rechercherItineraireDepuisPosition: (
     positionDepart: Coordonnees | null,
@@ -26,10 +28,14 @@ type RechercheItineraire = {
 };
 
 export function useRechercheItineraire(): RechercheItineraire {
-  const [departTexte, definirDepartTexte] = useState('');
+  const [departTexte, setDepartTexte] = useState('Position actuelle');
   const [destinationTexte, definirDestinationTexte] = useState('');
   const [depart, setDepart] = useState<AdresseGeocodee | null>(null);
   const [destination, setDestination] = useState<AdresseGeocodee | null>(null);
+  const [departSelectionne, setDepartSelectionne] =
+    useState<AdresseGeocodee | null>(null);
+  const [destinationSelectionnee, setDestinationSelectionnee] =
+    useState<AdresseGeocodee | null>(null);
   const [itineraire, setItineraire] = useState<Itineraire | null>(null);
   const [etatRecherche, setEtatRecherche] = useState<EtatChargement>('repos');
   const [messageRecherche, setMessageRecherche] = useState<string | null>(null);
@@ -38,6 +44,32 @@ export function useRechercheItineraire(): RechercheItineraire {
     () => departTexte.trim().length > 0 && destinationTexte.trim().length > 0,
     [departTexte, destinationTexte],
   );
+
+  function definirDepartTexte(valeur: string) {
+    setDepartTexte(valeur);
+
+    if (departSelectionne?.libelle !== valeur) {
+      setDepartSelectionne(null);
+    }
+  }
+
+  function definirTexteDestination(valeur: string) {
+    definirDestinationTexte(valeur);
+
+    if (destinationSelectionnee?.libelle !== valeur) {
+      setDestinationSelectionnee(null);
+    }
+  }
+
+  function selectionnerDepart(adresse: AdresseGeocodee) {
+    setDepartSelectionne(adresse);
+    setDepartTexte(adresse.libelle);
+  }
+
+  function selectionnerDestination(adresse: AdresseGeocodee) {
+    setDestinationSelectionnee(adresse);
+    definirDestinationTexte(adresse.libelle);
+  }
 
   async function rechercherItineraire() {
     if (!recherchePossible) {
@@ -50,8 +82,8 @@ export function useRechercheItineraire(): RechercheItineraire {
 
     try {
       const [departTrouve, destinationTrouvee] = await Promise.all([
-        geocoderAdresse(departTexte),
-        geocoderAdresse(destinationTexte),
+        departSelectionne ?? geocoderAdresse(departTexte),
+        destinationSelectionnee ?? geocoderAdresse(destinationTexte),
       ]);
 
       if (!departTrouve || !destinationTrouvee) {
@@ -84,7 +116,10 @@ export function useRechercheItineraire(): RechercheItineraire {
   async function rechercherItineraireDepuisPosition(
     positionDepart: Coordonnees | null,
   ) {
-    if (!positionDepart || destinationTexte.trim().length === 0) {
+    if (
+      (!positionDepart && !departSelectionne) ||
+      destinationTexte.trim().length === 0
+    ) {
       return;
     }
 
@@ -93,16 +128,25 @@ export function useRechercheItineraire(): RechercheItineraire {
     setItineraire(null);
 
     try {
-      const destinationTrouvee = await geocoderAdresse(destinationTexte);
+      const departTrouve =
+        departSelectionne ??
+        (positionDepart
+          ? {
+              libelle: 'Position actuelle',
+              coordonnees: positionDepart,
+            }
+          : null);
+      const destinationTrouvee =
+        destinationSelectionnee ?? (await geocoderAdresse(destinationTexte));
 
-      if (!destinationTrouvee) {
+      if (!departTrouve || !destinationTrouvee) {
         setEtatRecherche('erreur');
         setMessageRecherche('Adresse introuvable.');
         return;
       }
 
       const route = await calculerItinerairePieton(
-        positionDepart,
+        departTrouve.coordonnees,
         destinationTrouvee.coordonnees,
       );
 
@@ -112,10 +156,7 @@ export function useRechercheItineraire(): RechercheItineraire {
         return;
       }
 
-      setDepart({
-        libelle: 'Position actuelle',
-        coordonnees: positionDepart,
-      });
+      setDepart(departTrouve);
       setDestination(destinationTrouvee);
       setItineraire(route);
       setEtatRecherche('termine');
@@ -143,7 +184,9 @@ export function useRechercheItineraire(): RechercheItineraire {
     messageRecherche,
     recherchePossible,
     definirDepartTexte,
-    definirDestinationTexte,
+    definirDestinationTexte: definirTexteDestination,
+    selectionnerDepart,
+    selectionnerDestination,
     rechercherItineraire,
     rechercherItineraireDepuisPosition,
     arreterItineraire,
