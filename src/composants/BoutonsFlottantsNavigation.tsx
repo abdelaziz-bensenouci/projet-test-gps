@@ -87,7 +87,13 @@ export function BoutonsFlottantsNavigation({
 }
 
 function GroupeBoutons({ children }: { children: ReactNode }) {
-  return <View style={styles.groupe}>{children}</View>;
+  return (
+    <View style={styles.groupe}>
+      <View pointerEvents="none" style={styles.degradeMenuBleu} />
+      <View pointerEvents="none" style={styles.degradeMenuBlanc} />
+      <View style={styles.contenuGroupe}>{children}</View>
+    </View>
+  );
 }
 
 function Separateur() {
@@ -169,8 +175,8 @@ const styles = StyleSheet.create({
   },
   groupe: {
     alignItems: 'stretch',
-    backgroundColor: 'rgba(255,255,255,0.52)',
-    borderColor: 'rgba(255,255,255,0.52)',
+    backgroundColor: '#F7FCFD',
+    borderColor: 'rgba(137,190,207,0.18)',
     borderRadius: 27,
     borderWidth: 1,
     elevation: 16,
@@ -180,6 +186,26 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 18,
     width: 52,
+  },
+  contenuGroupe: {
+    position: 'relative',
+    zIndex: 1,
+  },
+  degradeMenuBlanc: {
+    backgroundColor: 'rgba(255,255,255,0.72)',
+    bottom: -16,
+    left: '42%',
+    position: 'absolute',
+    right: -18,
+    top: -10,
+  },
+  degradeMenuBleu: {
+    backgroundColor: 'rgba(222,246,252,0.46)',
+    bottom: 0,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
   },
   menuFlottant: {
     alignItems: 'center',

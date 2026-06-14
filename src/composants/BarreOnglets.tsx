@@ -12,14 +12,18 @@ type ProprietesBarreOnglets = {
 export function BarreOnglets({ ouvrirPanneauTrajet }: ProprietesBarreOnglets) {
   return (
     <View style={styles.barre}>
-      <Onglet libelle="Trajet" onPress={ouvrirPanneauTrajet} />
-      <Onglet libelle="Signaler" />
-      <Pressable accessibilityRole="button" style={styles.sos}>
-        <Text style={styles.texteSos}>SOS</Text>
-      </Pressable>
-      {ONGLETS.slice(2).map((onglet) => (
-        <Onglet key={onglet} libelle={onglet} />
-      ))}
+      <View pointerEvents="none" style={styles.degradeBleu} />
+      <View pointerEvents="none" style={styles.degradeBlanc} />
+      <View style={styles.contenuBarre}>
+        <Onglet libelle="Trajet" onPress={ouvrirPanneauTrajet} />
+        <Onglet libelle="Signaler" />
+        <Pressable accessibilityRole="button" style={styles.sos}>
+          <Text style={styles.texteSos}>SOS</Text>
+        </Pressable>
+        {ONGLETS.slice(2).map((onglet) => (
+          <Onglet key={onglet} libelle={onglet} />
+        ))}
+      </View>
     </View>
   );
 }
@@ -53,19 +57,45 @@ function Onglet({
 const styles = StyleSheet.create({
   barre: {
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.74)',
-    borderColor: 'rgba(104,132,145,0.16)',
+    backgroundColor: '#F3FAFC',
+    borderColor: 'rgba(137,190,207,0.22)',
     borderRadius: 32,
     borderWidth: 1,
     elevation: 12,
-    flexDirection: 'row',
-    justifyContent: 'space-around',
     minHeight: 68,
+    overflow: 'hidden',
     paddingHorizontal: 4,
+    position: 'relative',
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: -12 },
     shadowOpacity: 0.16,
     shadowRadius: 34,
+  },
+  contenuBarre: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    position: 'relative',
+    width: '100%',
+    zIndex: 1,
+  },
+  degradeBlanc: {
+    backgroundColor: 'rgba(255,255,255,0.58)',
+    borderBottomLeftRadius: 120,
+    borderTopLeftRadius: 120,
+    bottom: -16,
+    left: '48%',
+    position: 'absolute',
+    right: -20,
+    top: -12,
+  },
+  degradeBleu: {
+    backgroundColor: 'rgba(216,244,252,0.72)',
+    bottom: 0,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
   },
   onglet: {
     alignItems: 'center',
