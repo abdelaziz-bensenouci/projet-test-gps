@@ -1,3 +1,4 @@
+import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { StyleSheet, Text, View } from 'react-native';
 
 import type { Itineraire } from '../types/Itineraire';
@@ -14,7 +15,7 @@ export function BanniereNavigation({ itineraire }: ProprietesBanniereNavigation)
       </View>
       <View style={styles.contenuPrincipal}>
         <View style={styles.direction}>
-          <Text style={styles.directionTexte}>↑</Text>
+          <Feather color="#ffffff" name="arrow-up" size={21} />
         </View>
         <View style={styles.instructions}>
           <Text style={styles.distanceInstruction}>
@@ -26,18 +27,30 @@ export function BanniereNavigation({ itineraire }: ProprietesBanniereNavigation)
         </View>
       </View>
       <View style={styles.metriques}>
-        <MetriqueNavigation valeur={formaterDuree(itineraire.dureeSecondes)} />
-        <MetriqueNavigation valeur={formaterDistance(itineraire.distanceMetres)} />
-        <MetriqueNavigation valeur="1 etape" />
-        <MetriqueNavigation valeur={formaterHeureArrivee(itineraire.dureeSecondes)} />
+        <MetriqueNavigation icone="temps" valeur={formaterDuree(itineraire.dureeSecondes)} />
+        <MetriqueNavigation icone="distance" valeur={formaterDistance(itineraire.distanceMetres)} />
+        <MetriqueNavigation icone="etapes" valeur="1 etape" />
+        <MetriqueNavigation icone="arrivee" valeur={formaterHeureArrivee(itineraire.dureeSecondes)} />
       </View>
     </View>
   );
 }
 
-function MetriqueNavigation({ valeur }: { valeur: string }) {
+function MetriqueNavigation({
+  icone,
+  valeur,
+}: {
+  icone: 'temps' | 'distance' | 'etapes' | 'arrivee';
+  valeur: string;
+}) {
   return (
     <View style={styles.metrique}>
+      {icone === 'temps' ? <Feather color="#8FEAFF" name="clock" size={11} /> : null}
+      {icone === 'distance' ? <Feather color="#8FEAFF" name="map-pin" size={11} /> : null}
+      {icone === 'etapes' ? (
+        <MaterialCommunityIcons color="#8FEAFF" name="shoe-print" size={11} />
+      ) : null}
+      {icone === 'arrivee' ? <Feather color="#8FEAFF" name="clock" size={11} /> : null}
       <Text style={styles.texteMetrique} numberOfLines={1}>
         {valeur}
       </Text>
@@ -84,12 +97,12 @@ const styles = StyleSheet.create({
   },
   banniere: {
     alignItems: 'center',
-    backgroundColor: 'rgba(5,10,20,0.78)',
+    backgroundColor: 'rgba(5,10,20,0.72)',
     borderColor: 'rgba(0,209,255,0.24)',
     borderRadius: 26,
     borderWidth: 1,
     flexDirection: 'row',
-    gap: 8,
+    gap: 7,
     minHeight: 116,
     paddingLeft: 12,
     paddingRight: 8,
@@ -145,7 +158,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     flexDirection: 'row',
-    justifyContent: 'center',
+    gap: 3,
+    justifyContent: 'flex-start',
     minHeight: 19,
     paddingHorizontal: 4,
     width: '100%',

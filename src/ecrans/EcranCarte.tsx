@@ -125,13 +125,13 @@ const styles = StyleSheet.create({
     left: 14,
     position: 'absolute',
     right: 14,
-    top: 48,
+    top: 12,
     zIndex: 20,
   },
   boutonsDroite: {
+    bottom: 92,
     position: 'absolute',
-    right: 10,
-    top: 150,
+    right: 14,
     zIndex: 22,
   },
   barreOnglets: {
@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
     zIndex: 26,
   },
   stopNavigationAvecBarre: {
-    bottom: 86,
+    bottom: 118,
   },
   superpositionPanneau: {
     backgroundColor: 'rgba(2,6,12,0.32)',

@@ -1,6 +1,9 @@
+import { Feather } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 const ONGLETS = ['Trajet', 'Signaler', 'Partage', 'Urgence'] as const;
+const COULEUR_TEXTE = '#647782';
+const TAILLE_ICONE = 21;
 
 type ProprietesBarreOnglets = {
   ouvrirPanneauTrajet: () => void;
@@ -25,12 +28,23 @@ function Onglet({
   libelle,
   onPress,
 }: {
-  libelle: string;
+  libelle: (typeof ONGLETS)[number];
   onPress?: () => void;
 }) {
   return (
     <Pressable accessibilityRole="button" onPress={onPress} style={styles.onglet}>
-      <Text style={styles.icone}>V</Text>
+      {libelle === 'Trajet' ? (
+        <Feather color={COULEUR_TEXTE} name="navigation" size={TAILLE_ICONE} />
+      ) : null}
+      {libelle === 'Signaler' ? (
+        <Feather color={COULEUR_TEXTE} name="map-pin" size={TAILLE_ICONE} />
+      ) : null}
+      {libelle === 'Partage' ? (
+        <Feather color={COULEUR_TEXTE} name="share-2" size={TAILLE_ICONE} />
+      ) : null}
+      {libelle === 'Urgence' ? (
+        <Feather color={COULEUR_TEXTE} name="bell" size={TAILLE_ICONE} />
+      ) : null}
       <Text style={styles.texteOnglet}>{libelle}</Text>
     </Pressable>
   );
@@ -39,56 +53,55 @@ function Onglet({
 const styles = StyleSheet.create({
   barre: {
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.94)',
-    borderColor: 'rgba(226,232,240,0.9)',
-    borderRadius: 28,
+    backgroundColor: 'rgba(255,255,255,0.74)',
+    borderColor: 'rgba(104,132,145,0.16)',
+    borderRadius: 32,
     borderWidth: 1,
-    elevation: 18,
+    elevation: 12,
     flexDirection: 'row',
     justifyContent: 'space-around',
-    minHeight: 64,
-    paddingHorizontal: 10,
+    minHeight: 68,
+    paddingHorizontal: 4,
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.18,
-    shadowRadius: 22,
-  },
-  icone: {
-    color: '#64748b',
-    fontSize: 18,
-    fontWeight: '900',
-    lineHeight: 20,
+    shadowOffset: { width: 0, height: -12 },
+    shadowOpacity: 0.16,
+    shadowRadius: 34,
   },
   onglet: {
     alignItems: 'center',
     flex: 1,
-    gap: 2,
+    gap: 5,
     justifyContent: 'center',
-    minHeight: 50,
+    minHeight: 54,
+    borderColor: 'transparent',
+    borderRadius: 20,
+    borderWidth: 1,
   },
   sos: {
     alignItems: 'center',
-    backgroundColor: '#E11D2E',
-    borderColor: '#ffffff',
-    borderRadius: 30,
-    borderWidth: 4,
-    height: 60,
+    backgroundColor: '#dc2626',
+    borderColor: 'rgba(255,255,255,0.92)',
+    borderRadius: 999,
+    borderWidth: 2,
+    height: 64,
     justifyContent: 'center',
-    marginHorizontal: 6,
-    shadowColor: '#E11D2E',
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.32,
-    shadowRadius: 14,
-    width: 60,
+    marginHorizontal: 0,
+    shadowColor: '#dc2626',
+    shadowOffset: { width: 0, height: 7 },
+    shadowOpacity: 0.38,
+    shadowRadius: 16,
+    elevation: 12,
+    width: 64,
   },
   texteOnglet: {
-    color: '#475569',
-    fontSize: 10,
-    fontWeight: '900',
+    color: COULEUR_TEXTE,
+    fontSize: 11,
+    fontWeight: '800',
   },
   texteSos: {
     color: '#ffffff',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '900',
+    letterSpacing: 0.3,
   },
 });

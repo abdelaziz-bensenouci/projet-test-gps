@@ -1,3 +1,4 @@
+import { Feather } from '@expo/vector-icons';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 
 type ProprietesChampAdresse = {
@@ -22,7 +23,9 @@ export function ChampAdresse({
           styles.pastille,
           typeChamp === 'destination' && styles.pastilleDestination,
         ]}
-      />
+      >
+        <Feather color="#16a6c9" name="map-pin" size={18} />
+      </View>
       <View style={styles.zoneTexte}>
         <Text style={styles.libelle}>{libelle}</Text>
         <TextInput
@@ -47,13 +50,15 @@ const styles = StyleSheet.create({
     minHeight: 48,
   },
   pastille: {
-    backgroundColor: '#13b6d8',
+    alignItems: 'center',
+    backgroundColor: 'rgba(22,166,201,0.1)',
     borderRadius: 17,
     height: 34,
+    justifyContent: 'center',
     width: 34,
   },
   pastilleDestination: {
-    backgroundColor: '#22c55e',
+    backgroundColor: 'rgba(22,166,201,0.14)',
   },
   zoneTexte: {
     flex: 1,

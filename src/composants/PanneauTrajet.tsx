@@ -1,3 +1,4 @@
+import { Feather } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { ChampAdresse } from './ChampAdresse';
@@ -38,12 +39,14 @@ export function PanneauTrajet({
           onPress={fermer}
           style={styles.fermer}
         >
-          <Text style={styles.texteFermer}>X</Text>
+          <Feather color="#F3FCFF" name="x" size={18} />
         </Pressable>
       </View>
       <View style={styles.formulaire}>
         <View style={styles.departFixe}>
-          <View style={styles.pastilleDepart} />
+          <View style={styles.pastilleDepart}>
+            <Feather color="#13b6d8" name="crosshair" size={18} />
+          </View>
           <View style={styles.zoneDepartFixe}>
             <Text style={styles.libelleDepartFixe}>Depart</Text>
             <Text style={styles.texteDepartFixe}>Position actuelle</Text>
@@ -119,12 +122,12 @@ const styles = StyleSheet.create({
     opacity: 0.42,
   },
   carte: {
-    backgroundColor: 'rgba(5,10,20,0.92)',
+    backgroundColor: 'rgba(5,10,20,0.88)',
     borderColor: 'rgba(0,209,255,0.24)',
-    borderRadius: 28,
+    borderRadius: 24,
     borderWidth: 1,
-    elevation: 16,
-    gap: 12,
+    elevation: 20,
+    gap: 10,
     padding: 14,
     shadowColor: '#00131f',
     shadowOffset: { width: 0, height: 12 },
@@ -147,8 +150,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(143,234,255,0.16)',
     borderRadius: 16,
     borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    minHeight: 54,
+    padding: 9,
   },
   favoris: {
     flexDirection: 'row',
@@ -166,7 +169,7 @@ const styles = StyleSheet.create({
   formulaire: {
     backgroundColor: 'rgba(255,255,255,0.92)',
     borderColor: 'rgba(255,255,255,0.7)',
-    borderRadius: 20,
+    borderRadius: 18,
     borderWidth: 1,
     gap: 10,
     padding: 12,
@@ -178,9 +181,11 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   pastilleDepart: {
-    backgroundColor: '#13b6d8',
+    alignItems: 'center',
+    backgroundColor: 'rgba(22,166,201,0.1)',
     borderRadius: 17,
     height: 34,
+    justifyContent: 'center',
     width: 34,
   },
   section: {
