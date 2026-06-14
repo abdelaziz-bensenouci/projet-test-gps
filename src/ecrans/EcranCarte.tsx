@@ -17,6 +17,8 @@ export function EcranCarte() {
   const [cleRecentrage, setCleRecentrage] = useState(0);
   const [panneauTrajetOuvert, setPanneauTrajetOuvert] = useState(false);
   const [navigationPleinEcran, setNavigationPleinEcran] = useState(false);
+  const [pleinEcranModifieParUtilisateur, setPleinEcranModifieParUtilisateur] =
+    useState(false);
   const { positionUtilisateur } = usePositionUtilisateur();
   const recherche = useRechercheItineraire();
   const trajetActif = Boolean(recherche.itineraire);
@@ -27,26 +29,31 @@ export function EcranCarte() {
     setPanneauTrajetOuvert(false);
   };
   const rechercherDepuisPanneauTrajet = () => {
+    setPleinEcranModifieParUtilisateur(false);
     void recherche.rechercherItineraireDepuisPosition(positionUtilisateur);
   };
   const recentrerCarte = () => {
     setCleRecentrage((cleActuelle) => cleActuelle + 1);
   };
   const basculerPleinEcran = () => {
+    setPleinEcranModifieParUtilisateur(true);
     setNavigationPleinEcran((pleinEcran) => !pleinEcran);
   };
   const arreterNavigation = () => {
     recherche.arreterItineraire();
     setNavigationPleinEcran(false);
+    setPleinEcranModifieParUtilisateur(false);
     setPanneauTrajetOuvert(false);
   };
 
   useEffect(() => {
     if (recherche.itineraire) {
       setPanneauTrajetOuvert(false);
-      setNavigationPleinEcran(true);
+      if (!pleinEcranModifieParUtilisateur) {
+        setNavigationPleinEcran(true);
+      }
     }
-  }, [recherche.itineraire]);
+  }, [pleinEcranModifieParUtilisateur, recherche.itineraire]);
 
   return (
     <SafeAreaView style={styles.page}>
@@ -66,6 +73,20 @@ export function EcranCarte() {
             <BanniereSignalements
               destinationTexte={recherche.destinationTexte}
               ouvrirPanneauTrajet={ouvrirPanneauTrajet}
+              panneauTrajet={
+                panneauTrajetOuvert ? (
+                  <PanneauTrajet
+                    definirDestinationTexte={recherche.definirDestinationTexte}
+                    destinationTexte={recherche.destinationTexte}
+                    etatRecherche={recherche.etatRecherche}
+                    fermer={fermerPanneauTrajet}
+                    integre
+                    messageRecherche={recherche.messageRecherche}
+                    positionDisponible={Boolean(positionUtilisateur)}
+                    rechercherItineraire={rechercherDepuisPanneauTrajet}
+                  />
+                ) : null
+              }
             />
           )}
         </View>
@@ -93,21 +114,6 @@ export function EcranCarte() {
             <BoutonStopNavigation arreterNavigation={arreterNavigation} />
           </View>
         ) : null}
-        {panneauTrajetOuvert ? (
-          <View style={styles.superpositionPanneau}>
-            <View style={styles.panneauTrajetFlottant}>
-              <PanneauTrajet
-                definirDestinationTexte={recherche.definirDestinationTexte}
-                destinationTexte={recherche.destinationTexte}
-                etatRecherche={recherche.etatRecherche}
-                fermer={fermerPanneauTrajet}
-                messageRecherche={recherche.messageRecherche}
-                positionDisponible={Boolean(positionUtilisateur)}
-                rechercherItineraire={rechercherDepuisPanneauTrajet}
-              />
-            </View>
-          </View>
-        ) : null}
       </View>
     </SafeAreaView>
   );
@@ -122,17 +128,19 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   banniereFlottante: {
+    elevation: 1000,
     left: 14,
     position: 'absolute',
     right: 14,
     top: 12,
-    zIndex: 20,
+    zIndex: 1000,
   },
   boutonsDroite: {
     bottom: 92,
+    elevation: 1100,
     position: 'absolute',
     right: 14,
-    zIndex: 22,
+    zIndex: 1100,
   },
   barreOnglets: {
     bottom: 12,
@@ -140,12 +148,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 8,
     zIndex: 24,
-  },
-  panneauTrajetFlottant: {
-    left: 14,
-    position: 'absolute',
-    right: 14,
-    top: 96,
   },
   stopNavigation: {
     alignItems: 'center',
@@ -157,14 +159,5 @@ const styles = StyleSheet.create({
   },
   stopNavigationAvecBarre: {
     bottom: 118,
-  },
-  superpositionPanneau: {
-    backgroundColor: 'rgba(2,6,12,0.32)',
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-    right: 0,
-    top: 0,
-    zIndex: 1000,
   },
 });

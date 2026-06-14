@@ -5,13 +5,14 @@ import { ChampAdresse } from './ChampAdresse';
 import { MessageEtat } from './MessageEtat';
 import type { EtatChargement } from '../types/EtatChargement';
 
-const LIEUX_FAVORIS = ['Maison', 'Travail', 'Ecole'];
+const LIEUX_FAVORIS = ['Palestro', 'Pose', 'Hoche'];
 
 type ProprietesPanneauTrajet = {
   destinationTexte: string;
   etatRecherche: EtatChargement;
   messageRecherche: string | null;
   positionDisponible: boolean;
+  integre?: boolean;
   fermer: () => void;
   definirDestinationTexte: (valeur: string) => void;
   rechercherItineraire: () => void;
@@ -22,6 +23,7 @@ export function PanneauTrajet({
   etatRecherche,
   messageRecherche,
   positionDisponible,
+  integre = false,
   fermer,
   definirDestinationTexte,
   rechercherItineraire,
@@ -29,32 +31,35 @@ export function PanneauTrajet({
   const chargement = etatRecherche === 'chargement';
   const recherchePossible =
     positionDisponible && destinationTexte.trim().length > 0;
+  const afficherRecherche =
+    destinationTexte.trim().length > 0 || Boolean(messageRecherche);
 
   return (
-    <View style={styles.carte}>
+    <View style={[styles.carte, integre && styles.carteIntegree]}>
       <View style={styles.entete}>
         <Text style={styles.titre}>Nouveau trajet</Text>
         <Pressable
+          accessibilityLabel="Fermer le panneau trajet"
           accessibilityRole="button"
           onPress={fermer}
           style={styles.fermer}
         >
-          <Feather color="#F3FCFF" name="x" size={18} />
+          <Feather color="#FFFFFF" name="x" size={18} />
         </Pressable>
       </View>
       <View style={styles.formulaire}>
         <View style={styles.departFixe}>
           <View style={styles.pastilleDepart}>
-            <Feather color="#13b6d8" name="crosshair" size={18} />
+            <Feather color="#16a6c9" name="crosshair" size={16} />
           </View>
           <View style={styles.zoneDepartFixe}>
-            <Text style={styles.libelleDepartFixe}>Depart</Text>
+            <Text style={styles.libelleDepartFixe}>DÉPART</Text>
             <Text style={styles.texteDepartFixe}>Position actuelle</Text>
           </View>
         </View>
         <View style={styles.separateur} />
         <ChampAdresse
-          libelle="Arrivee"
+          libelle="ARRIVÉE"
           placeholder="Saisir une adresse"
           surChangement={definirDestinationTexte}
           typeChamp="destination"
@@ -62,83 +67,94 @@ export function PanneauTrajet({
         />
       </View>
       <View style={styles.section}>
-        <Text style={styles.sectionTitre}>Lieux favoris</Text>
+        <Text style={styles.sectionTitre}>LIEUX FAVORIS</Text>
         <View style={styles.favoris}>
           {LIEUX_FAVORIS.map((lieu) => (
             <View key={lieu} style={styles.favori}>
-              <Text style={styles.texteFavori}>{lieu}</Text>
+              <Text numberOfLines={1} style={styles.texteFavori}>
+                {lieu}
+              </Text>
+              <View style={styles.actionsFavori}>
+                <Pressable accessibilityRole="button" style={styles.actionFavori}>
+                  <Text style={styles.texteActionFavori}>Départ</Text>
+                </Pressable>
+                <Pressable accessibilityRole="button" style={styles.actionFavori}>
+                  <Text style={styles.texteActionFavori}>Arrivée</Text>
+                </Pressable>
+              </View>
             </View>
           ))}
         </View>
       </View>
-      <View style={styles.actionsSecondaires}>
-        <View style={styles.actionSecondaire}>
-          <Text style={styles.texteActionSecondaire}>Depart</Text>
-        </View>
-        <View style={styles.actionSecondaire}>
-          <Text style={styles.texteActionSecondaire}>Arrivee</Text>
-        </View>
-      </View>
-      <Pressable
-        disabled={!recherchePossible || chargement}
-        onPress={rechercherItineraire}
-        style={[
-          styles.boutonCalcul,
-          (!recherchePossible || chargement) && styles.boutonCalculInactif,
-        ]}
-      >
-        <Text style={styles.texteBoutonCalcul}>
-          {chargement ? 'Calcul en cours' : 'Calculer le trajet'}
-        </Text>
-      </Pressable>
-      <MessageEtat message={messageRecherche} />
+      {afficherRecherche ? (
+        <>
+          <Pressable
+            disabled={!recherchePossible || chargement}
+            onPress={rechercherItineraire}
+            style={[
+              styles.boutonCalcul,
+              (!recherchePossible || chargement) && styles.boutonCalculInactif,
+            ]}
+          >
+            <Text style={styles.texteBoutonCalcul}>
+              {chargement ? 'Calcul en cours' : 'Calculer le trajet'}
+            </Text>
+          </Pressable>
+          <MessageEtat message={messageRecherche} />
+        </>
+      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  actionSecondaire: {
+  actionFavori: {
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderColor: 'rgba(143,234,255,0.18)',
-    borderRadius: 18,
-    borderWidth: 1,
+    backgroundColor: '#16a6c9',
+    borderRadius: 16,
     flex: 1,
+    height: 32,
     justifyContent: 'center',
-    minHeight: 40,
   },
-  actionsSecondaires: {
+  actionsFavori: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 8,
   },
   boutonCalcul: {
     alignItems: 'center',
-    backgroundColor: '#22D3EE',
-    borderRadius: 22,
+    backgroundColor: '#16a6c9',
+    borderRadius: 16,
+    height: 36,
     justifyContent: 'center',
-    minHeight: 46,
   },
   boutonCalculInactif: {
     opacity: 0.42,
   },
   carte: {
-    backgroundColor: 'rgba(5,10,20,0.88)',
-    borderColor: 'rgba(0,209,255,0.24)',
+    backgroundColor: 'rgba(247,249,250,0.96)',
+    borderColor: '#C8D8E0',
     borderRadius: 24,
     borderWidth: 1,
     elevation: 20,
     gap: 10,
     padding: 14,
-    shadowColor: '#00131f',
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.28,
-    shadowRadius: 24,
+    shadowOpacity: 0.16,
+    shadowRadius: 26,
+  },
+  carteIntegree: {
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+    elevation: 0,
+    padding: 0,
+    shadowOpacity: 0,
   },
   departFixe: {
     alignItems: 'center',
     flexDirection: 'row',
     gap: 10,
-    minHeight: 48,
+    minHeight: 46,
   },
   entete: {
     alignItems: 'center',
@@ -146,36 +162,45 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   favori: {
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderColor: 'rgba(143,234,255,0.16)',
+    backgroundColor: '#EAF1F4',
+    borderColor: '#C8D8E0',
     borderRadius: 16,
     borderWidth: 1,
+    elevation: 1,
+    gap: 7,
     minHeight: 54,
     padding: 9,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
   },
   favoris: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: 8,
   },
   fermer: {
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: '#ff5a4f',
     borderRadius: 17,
+    elevation: 8,
     height: 34,
     justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.16,
+    shadowRadius: 10,
     width: 34,
   },
   formulaire: {
-    backgroundColor: 'rgba(255,255,255,0.92)',
-    borderColor: 'rgba(255,255,255,0.7)',
+    backgroundColor: '#EAF1F4',
+    borderColor: '#C8D8E0',
     borderRadius: 18,
     borderWidth: 1,
     gap: 10,
     padding: 12,
   },
   libelleDepartFixe: {
-    color: '#64748b',
+    color: '#657783',
     fontSize: 11,
     fontWeight: '900',
     textTransform: 'uppercase',
@@ -192,8 +217,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   sectionTitre: {
-    color: 'rgba(143,234,255,0.72)',
-    fontSize: 11,
+    color: '#657783',
+    fontSize: 12,
     fontWeight: '900',
     textTransform: 'uppercase',
   },
@@ -202,36 +227,30 @@ const styles = StyleSheet.create({
     height: 1,
     marginLeft: 44,
   },
-  texteActionSecondaire: {
-    color: '#F3FCFF',
-    fontSize: 13,
-    fontWeight: '900',
-  },
   texteBoutonCalcul: {
-    color: '#04242d',
-    fontSize: 15,
+    color: '#FFFFFF',
+    fontSize: 12,
     fontWeight: '900',
   },
   texteFavori: {
-    color: '#F3FCFF',
+    color: '#1F2D38',
     fontSize: 13,
-    fontWeight: '800',
+    fontWeight: '900',
   },
-  texteFermer: {
-    color: '#F3FCFF',
-    fontSize: 18,
+  texteDepartFixe: {
+    color: '#1F2D38',
+    fontSize: 15,
     fontWeight: '900',
     lineHeight: 22,
   },
-  texteDepartFixe: {
-    color: '#0f172a',
-    fontSize: 15,
+  texteActionFavori: {
+    color: '#FFFFFF',
+    fontSize: 12,
     fontWeight: '900',
-    lineHeight: 28,
   },
   titre: {
-    color: '#F3FCFF',
-    fontSize: 18,
+    color: '#1F2D38',
+    fontSize: 17,
     fontWeight: '900',
   },
   zoneDepartFixe: {

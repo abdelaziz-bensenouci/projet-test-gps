@@ -1,5 +1,5 @@
 import { Feather } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { ReactNode } from 'react';
 
@@ -17,7 +17,11 @@ export function BoutonsFlottantsNavigation({
   basculerPleinEcran,
   recentrerCarte,
 }: ProprietesBoutonsFlottantsNavigation) {
-  const [menuMasque, setMenuMasque] = useState(false);
+  const [menuMasque, setMenuMasque] = useState(true);
+
+  useEffect(() => {
+    setMenuMasque(true);
+  }, [trajetActif]);
 
   return (
     <View style={styles.colonne}>

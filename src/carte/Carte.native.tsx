@@ -158,7 +158,7 @@ export function Carte({
       {positionUtilisateur ? (
         <MarqueurUtilisateur coordonnees={positionUtilisateur} />
       ) : null}
-      {depart ? (
+      {depart && !estDepartPositionActuelle(depart.libelle) ? (
         <MarqueurCarte
           coordonnees={depart.coordonnees}
           identifiant="depart"
@@ -174,4 +174,8 @@ export function Carte({
       ) : null}
     </Map>
   );
+}
+
+function estDepartPositionActuelle(libelle: string) {
+  return libelle.trim().toLowerCase() === 'position actuelle';
 }

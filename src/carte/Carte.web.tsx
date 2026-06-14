@@ -31,6 +31,7 @@ export function Carte({
   const marqueurUtilisateurRef = useRef<maplibregl.Marker | null>(null);
   const [traceAffiche, setTraceAffiche] = useState<Coordonnees[]>([]);
   const styleCarte = useMemo(() => obtenirStyleCarte(modeCarte), [modeCarte]);
+  const styleAppliqueRef = useRef(styleCarte);
 
   useEffect(() => {
     if (!conteneurRef.current || carteRef.current) {
@@ -85,7 +86,8 @@ export function Carte({
   useEffect(() => {
     const carte = carteRef.current;
 
-    if (carte) {
+    if (carte && styleAppliqueRef.current !== styleCarte) {
+      styleAppliqueRef.current = styleCarte;
       carte.setStyle(styleCarte);
     }
   }, [styleCarte]);
@@ -97,7 +99,12 @@ export function Carte({
       return;
     }
 
+    let actif = true;
     const appliquerTrace = () => {
+      if (!actif || !carte.isStyleLoaded()) {
+        return;
+      }
+
       const donnees: GeoJSON.FeatureCollection<GeoJSON.LineString> = {
         type: 'FeatureCollection',
         features: traceAffiche.length >= 2
@@ -126,9 +133,18 @@ export function Carte({
 
     if (carte.isStyleLoaded()) {
       appliquerTrace();
-    } else {
-      carte.once('styledata', appliquerTrace);
     }
+
+    carte.on('load', appliquerTrace);
+    carte.on('styledata', appliquerTrace);
+    carte.on('idle', appliquerTrace);
+
+    return () => {
+      actif = false;
+      carte.off('load', appliquerTrace);
+      carte.off('styledata', appliquerTrace);
+      carte.off('idle', appliquerTrace);
+    };
   }, [traceAffiche, styleCarte]);
 
   useEffect(() => {
@@ -141,7 +157,7 @@ export function Carte({
     marqueursRef.current.forEach((marqueur) => marqueur.remove());
     marqueursRef.current = [];
 
-    if (depart) {
+    if (depart && !estDepartPositionActuelle(depart.libelle)) {
       marqueursRef.current.push(
         creerMarqueur(carte, depart.coordonnees, '#2563eb'),
       );
@@ -149,7 +165,7 @@ export function Carte({
 
     if (destination) {
       marqueursRef.current.push(
-        creerMarqueur(carte, destination.coordonnees, '#dc2626'),
+        creerMarqueurArrivee(carte, destination.coordonnees, destination.libelle),
       );
     }
   }, [depart, destination]);
@@ -321,4 +337,78 @@ function creerMarqueur(
   return new maplibregl.Marker({ element })
     .setLngLat(versLngLat(coordonnees))
     .addTo(carte);
+}
+
+function creerMarqueurArrivee(
+  carte: maplibregl.Map,
+  coordonnees: { longitude: number; latitude: number },
+  libelle: string,
+) {
+  const racine = document.createElement('div');
+  const marqueur = document.createElement('div');
+  const hampe = document.createElement('div');
+  const drapeau = document.createElement('div');
+  const etiquette = document.createElement('div');
+
+  racine.title = libelle;
+  racine.style.width = '78px';
+  racine.style.height = '78px';
+  racine.style.pointerEvents = 'auto';
+  racine.style.zIndex = '96';
+
+  marqueur.style.position = 'relative';
+  marqueur.style.width = '78px';
+  marqueur.style.height = '78px';
+  marqueur.style.filter = 'drop-shadow(0 12px 18px rgba(0,0,0,0.34))';
+
+  hampe.style.position = 'absolute';
+  hampe.style.left = '21px';
+  hampe.style.top = '8px';
+  hampe.style.width = '4px';
+  hampe.style.height = '54px';
+  hampe.style.borderRadius = '999px';
+  hampe.style.background = 'linear-gradient(180deg, #f8fafc, #94a3b8)';
+  hampe.style.boxShadow = '0 0 0 2px rgba(7,24,39,0.72)';
+
+  drapeau.style.position = 'absolute';
+  drapeau.style.left = '25px';
+  drapeau.style.top = '8px';
+  drapeau.style.width = '36px';
+  drapeau.style.height = '25px';
+  drapeau.style.borderRadius = '3px 6px 6px 3px';
+  drapeau.style.border = '2px solid rgba(7,24,39,0.9)';
+  drapeau.style.backgroundColor = '#ffffff';
+  drapeau.style.backgroundImage = [
+    'linear-gradient(45deg, #111827 25%, transparent 25%)',
+    'linear-gradient(-45deg, #111827 25%, transparent 25%)',
+    'linear-gradient(45deg, transparent 75%, #111827 75%)',
+    'linear-gradient(-45deg, transparent 75%, #111827 75%)',
+  ].join(', ');
+  drapeau.style.backgroundSize = '14px 14px';
+  drapeau.style.backgroundPosition = '0 0, 0 7px, 7px -7px, -7px 0';
+  drapeau.style.boxShadow =
+    '0 0 0 3px rgba(255,255,255,0.72), 0 0 0 8px rgba(23,212,255,0.22)';
+
+  etiquette.textContent = 'Arrivée';
+  etiquette.style.position = 'absolute';
+  etiquette.style.left = '2px';
+  etiquette.style.top = '54px';
+  etiquette.style.padding = '3px 8px';
+  etiquette.style.borderRadius = '999px';
+  etiquette.style.background = 'rgba(7,24,39,0.95)';
+  etiquette.style.color = '#ffffff';
+  etiquette.style.border = '1px solid rgba(255,255,255,0.55)';
+  etiquette.style.font = '850 11px/14px system-ui, sans-serif';
+  etiquette.style.whiteSpace = 'nowrap';
+
+  marqueur.append(hampe, drapeau, etiquette);
+  racine.appendChild(marqueur);
+
+  return new maplibregl.Marker({ anchor: 'bottom', element: racine })
+    .setLngLat(versLngLat(coordonnees))
+    .addTo(carte);
+}
+
+function estDepartPositionActuelle(libelle: string) {
+  return libelle.trim().toLowerCase() === 'position actuelle';
 }

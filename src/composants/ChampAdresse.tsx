@@ -24,7 +24,11 @@ export function ChampAdresse({
           typeChamp === 'destination' && styles.pastilleDestination,
         ]}
       >
-        <Feather color="#16a6c9" name="map-pin" size={18} />
+        <Feather
+          color={typeChamp === 'destination' ? '#22c55e' : '#16a6c9'}
+          name="map-pin"
+          size={16}
+        />
       </View>
       <View style={styles.zoneTexte}>
         <Text style={styles.libelle}>{libelle}</Text>
@@ -33,7 +37,7 @@ export function ChampAdresse({
           autoCorrect={false}
           onChangeText={surChangement}
           placeholder={placeholder}
-          placeholderTextColor="#94a3b8"
+          placeholderTextColor="#657783"
           style={styles.champ}
           value={valeur}
         />
@@ -47,7 +51,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     gap: 10,
-    minHeight: 48,
+    minHeight: 46,
   },
   pastille: {
     alignItems: 'center',
@@ -58,20 +62,20 @@ const styles = StyleSheet.create({
     width: 34,
   },
   pastilleDestination: {
-    backgroundColor: 'rgba(22,166,201,0.14)',
+    backgroundColor: 'rgba(34,197,94,0.14)',
   },
   zoneTexte: {
     flex: 1,
     minWidth: 0,
   },
   libelle: {
-    color: '#64748b',
+    color: '#657783',
     fontSize: 11,
     fontWeight: '900',
     textTransform: 'uppercase',
   },
   champ: {
-    color: '#0f172a',
+    color: '#1F2D38',
     fontSize: 15,
     fontWeight: '900',
     minHeight: 28,
