@@ -48,11 +48,21 @@ export function Carte({
       />
       <GeoJSONSource id="itineraire" data={geoJsonItineraire}>
         <Layer
+          id="halo-itineraire"
+          type="line"
+          paint={{
+            'line-blur': 6,
+            'line-color': '#22d3ee',
+            'line-opacity': 0.28,
+            'line-width': 40,
+          }}
+        />
+        <Layer
           id="trace-itineraire"
           type="line"
           paint={{
-            'line-color': '#2563eb',
-            'line-width': 5,
+            'line-color': '#22d3ee',
+            'line-width': 20,
           }}
         />
       </GeoJSONSource>

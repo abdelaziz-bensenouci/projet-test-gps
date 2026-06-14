@@ -58,10 +58,21 @@ export function Carte({
       if (!carte.getSource('itineraire')) {
         carte.addSource('itineraire', { type: 'geojson', data: donnees });
         carte.addLayer({
+          id: 'halo-itineraire',
+          type: 'line',
+          source: 'itineraire',
+          paint: {
+            'line-blur': 6,
+            'line-color': '#22d3ee',
+            'line-opacity': 0.28,
+            'line-width': 40,
+          },
+        });
+        carte.addLayer({
           id: 'trace-itineraire',
           type: 'line',
           source: 'itineraire',
-          paint: { 'line-color': '#2563eb', 'line-width': 5 },
+          paint: { 'line-color': '#22d3ee', 'line-width': 20 },
         });
         return;
       }
