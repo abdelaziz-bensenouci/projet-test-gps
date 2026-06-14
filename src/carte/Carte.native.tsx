@@ -15,11 +15,13 @@ import { calculerBearing, versLngLat } from '../utilitaires/coordonnees';
 import { creerGeoJsonItineraire } from '../utilitaires/geojson';
 import { adapterTraceSurAxesRoutiers } from './centrageTrace/adapterTraceSurAxesRoutiers';
 import { MarqueurCarte } from './MarqueurCarte';
+import { MarqueurUtilisateur } from './MarqueurUtilisateur';
 import { stylesCarte } from './stylesCarte';
 import type { ProprietesCarte } from './typesCarte';
 import type { Coordonnees } from '../types/Coordonnees';
 
 export function Carte({
+  cleRecentrage,
   depart,
   destination,
   itineraire,
@@ -88,6 +90,19 @@ export function Carte({
     }
   }, [depart, itineraire, positionUtilisateur]);
 
+  useEffect(() => {
+    if (!positionUtilisateur || cleRecentrage === 0) {
+      return;
+    }
+
+    cameraRef.current?.easeTo({
+      center: versLngLat(positionUtilisateur),
+      duration: 500,
+      pitch: itineraire ? PITCH_NAVIGATION : 0,
+      zoom: itineraire ? ZOOM_NAVIGATION : 16,
+    });
+  }, [cleRecentrage, itineraire, positionUtilisateur]);
+
   return (
     <Map attribution mapStyle={styleCarte} style={stylesCarte.carte}>
       <Camera
@@ -140,6 +155,9 @@ export function Carte({
           }}
         />
       </GeoJSONSource>
+      {positionUtilisateur ? (
+        <MarqueurUtilisateur coordonnees={positionUtilisateur} />
+      ) : null}
       {depart ? (
         <MarqueurCarte
           coordonnees={depart.coordonnees}

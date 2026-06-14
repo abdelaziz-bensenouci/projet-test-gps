@@ -7,6 +7,7 @@ export type ProprietesCarte = {
   depart: AdresseGeocodee | null;
   destination: AdresseGeocodee | null;
   itineraire: Itineraire | null;
+  cleRecentrage: number;
   modeCarte: ModeCarte;
   positionUtilisateur: Coordonnees | null;
 };

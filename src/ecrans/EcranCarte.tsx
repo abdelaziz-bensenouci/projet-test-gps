@@ -1,53 +1,70 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { SafeAreaView, StyleSheet, View } from 'react-native';
 
 import { Carte } from '../carte/Carte';
-import { ControlesCarteFlottants } from '../composants/ControlesCarteFlottants';
-import { PanneauRecherche } from '../composants/PanneauRecherche';
+import { BanniereNavigation } from '../composants/BanniereNavigation';
+import { BanniereSignalements } from '../composants/BanniereSignalements';
+import { PanneauTrajet } from '../composants/PanneauTrajet';
 import { usePositionUtilisateur } from '../hooks/usePositionUtilisateur';
 import { useRechercheItineraire } from '../hooks/useRechercheItineraire';
 import type { ModeCarte } from '../types/ModeCarte';
 
 export function EcranCarte() {
-  const [modeCarte, setModeCarte] = useState<ModeCarte>('clair');
+  const modeCarte: ModeCarte = 'clair';
+  const cleRecentrage = 0;
+  const [panneauTrajetOuvert, setPanneauTrajetOuvert] = useState(false);
   const { positionUtilisateur } = usePositionUtilisateur();
   const recherche = useRechercheItineraire();
-  const chargement = recherche.etatRecherche === 'chargement';
-  const basculerModeCarte = () => {
-    setModeCarte((modeActuel) =>
-      modeActuel === 'clair' ? 'sombre' : 'clair',
-    );
+  const ouvrirPanneauTrajet = () => {
+    setPanneauTrajetOuvert(true);
   };
+  const fermerPanneauTrajet = () => {
+    setPanneauTrajetOuvert(false);
+  };
+  const rechercherDepuisPanneauTrajet = () => {
+    void recherche.rechercherItineraireDepuisPosition(positionUtilisateur);
+  };
+
+  useEffect(() => {
+    if (recherche.itineraire) {
+      setPanneauTrajetOuvert(false);
+    }
+  }, [recherche.itineraire]);
 
   return (
     <SafeAreaView style={styles.page}>
       <View style={styles.conteneurCarte}>
         <Carte
+          cleRecentrage={cleRecentrage}
           depart={recherche.depart}
           destination={recherche.destination}
           itineraire={recherche.itineraire}
           modeCarte={modeCarte}
           positionUtilisateur={positionUtilisateur}
         />
-        <ControlesCarteFlottants
-          basculerModeCarte={basculerModeCarte}
-          chargement={chargement}
-          modeCarte={modeCarte}
-          recherchePossible={recherche.recherchePossible}
-          rechercherItineraire={recherche.rechercherItineraire}
-        />
-        <View style={styles.panneauFlottant}>
-          <PanneauRecherche
-            departTexte={recherche.departTexte}
-            definirDepartTexte={recherche.definirDepartTexte}
-            definirDestinationTexte={recherche.definirDestinationTexte}
-            destinationTexte={recherche.destinationTexte}
-            etatRecherche={recherche.etatRecherche}
-            messageRecherche={recherche.messageRecherche}
-            recherchePossible={recherche.recherchePossible}
-            rechercherItineraire={recherche.rechercherItineraire}
-          />
+        <View style={styles.banniereFlottante}>
+          {recherche.itineraire ? (
+            <BanniereNavigation itineraire={recherche.itineraire} />
+          ) : (
+            <BanniereSignalements
+              destinationTexte={recherche.destinationTexte}
+              ouvrirPanneauTrajet={ouvrirPanneauTrajet}
+            />
+          )}
         </View>
+        {panneauTrajetOuvert ? (
+          <View style={styles.panneauTrajetFlottant}>
+            <PanneauTrajet
+              definirDestinationTexte={recherche.definirDestinationTexte}
+              destinationTexte={recherche.destinationTexte}
+              etatRecherche={recherche.etatRecherche}
+              fermer={fermerPanneauTrajet}
+              messageRecherche={recherche.messageRecherche}
+              positionDisponible={Boolean(positionUtilisateur)}
+              rechercherItineraire={rechercherDepuisPanneauTrajet}
+            />
+          </View>
+        ) : null}
       </View>
     </SafeAreaView>
   );
@@ -61,10 +78,16 @@ const styles = StyleSheet.create({
   conteneurCarte: {
     flex: 1,
   },
-  panneauFlottant: {
-    bottom: 18,
+  banniereFlottante: {
     left: 14,
     position: 'absolute',
     right: 14,
+    top: 48,
+  },
+  panneauTrajetFlottant: {
+    left: 14,
+    position: 'absolute',
+    right: 14,
+    top: 240,
   },
 });

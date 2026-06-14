@@ -4,6 +4,21 @@ export const stylesCarte = StyleSheet.create({
   carte: {
     flex: 1,
   },
+  ancreMarqueurUtilisateur: {
+    alignItems: 'center',
+    height: 66,
+    justifyContent: 'center',
+    shadowColor: '#1e90ff',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.62,
+    shadowRadius: 18,
+    width: 66,
+  },
+  imageMarqueurUtilisateur: {
+    height: 66,
+    resizeMode: 'contain',
+    width: 66,
+  },
   marqueurDepart: {
     backgroundColor: '#13b6d8',
     borderColor: '#ffffff',

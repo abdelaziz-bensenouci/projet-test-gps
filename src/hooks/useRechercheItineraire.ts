@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { geocoderAdresse } from '../geocodage/ServiceGeocodage';
 import { calculerItinerairePieton } from '../itineraire/ServiceItineraire';
 import type { AdresseGeocodee } from '../types/AdresseGeocodee';
+import type { Coordonnees } from '../types/Coordonnees';
 import type { EtatChargement } from '../types/EtatChargement';
 import type { Itineraire } from '../types/Itineraire';
 
@@ -18,6 +19,9 @@ type RechercheItineraire = {
   definirDepartTexte: (valeur: string) => void;
   definirDestinationTexte: (valeur: string) => void;
   rechercherItineraire: () => Promise<void>;
+  rechercherItineraireDepuisPosition: (
+    positionDepart: Coordonnees | null,
+  ) => Promise<void>;
 };
 
 export function useRechercheItineraire(): RechercheItineraire {
@@ -76,6 +80,50 @@ export function useRechercheItineraire(): RechercheItineraire {
     }
   }
 
+  async function rechercherItineraireDepuisPosition(
+    positionDepart: Coordonnees | null,
+  ) {
+    if (!positionDepart || destinationTexte.trim().length === 0) {
+      return;
+    }
+
+    setEtatRecherche('chargement');
+    setMessageRecherche(null);
+    setItineraire(null);
+
+    try {
+      const destinationTrouvee = await geocoderAdresse(destinationTexte);
+
+      if (!destinationTrouvee) {
+        setEtatRecherche('erreur');
+        setMessageRecherche('Adresse introuvable.');
+        return;
+      }
+
+      const route = await calculerItinerairePieton(
+        positionDepart,
+        destinationTrouvee.coordonnees,
+      );
+
+      if (!route) {
+        setEtatRecherche('erreur');
+        setMessageRecherche('Itineraire OSRM introuvable.');
+        return;
+      }
+
+      setDepart({
+        libelle: 'Position actuelle',
+        coordonnees: positionDepart,
+      });
+      setDestination(destinationTrouvee);
+      setItineraire(route);
+      setEtatRecherche('termine');
+    } catch {
+      setEtatRecherche('erreur');
+      setMessageRecherche('Recherche impossible.');
+    }
+  }
+
   return {
     departTexte,
     destinationTexte,
@@ -88,5 +136,6 @@ export function useRechercheItineraire(): RechercheItineraire {
     definirDepartTexte,
     definirDestinationTexte,
     rechercherItineraire,
+    rechercherItineraireDepuisPosition,
   };
 }

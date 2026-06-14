@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
+import marqueurUtilisateur from '../../assets/user-marker-idle.png';
 import {
   CENTRE_CARTE_INITIAL,
   CENTRAGE_TRACE_ACTIF,
@@ -17,6 +18,7 @@ import type { ProprietesCarte } from './typesCarte';
 import type { Coordonnees } from '../types/Coordonnees';
 
 export function Carte({
+  cleRecentrage,
   depart,
   destination,
   itineraire,
@@ -26,6 +28,7 @@ export function Carte({
   const conteneurRef = useRef<HTMLDivElement | null>(null);
   const carteRef = useRef<maplibregl.Map | null>(null);
   const marqueursRef = useRef<maplibregl.Marker[]>([]);
+  const marqueurUtilisateurRef = useRef<maplibregl.Marker | null>(null);
   const [traceAffiche, setTraceAffiche] = useState<Coordonnees[]>([]);
   const styleCarte = useMemo(() => obtenirStyleCarte(modeCarte), [modeCarte]);
 
@@ -180,6 +183,43 @@ export function Carte({
 
   useEffect(() => {
     const carte = carteRef.current;
+
+    if (!carte || !positionUtilisateur) {
+      marqueurUtilisateurRef.current?.remove();
+      marqueurUtilisateurRef.current = null;
+      return;
+    }
+
+    if (!marqueurUtilisateurRef.current) {
+      marqueurUtilisateurRef.current = new maplibregl.Marker({
+        anchor: 'center',
+        element: creerMarqueurUtilisateur(),
+      })
+        .setLngLat(versLngLat(positionUtilisateur))
+        .addTo(carte);
+      return;
+    }
+
+    marqueurUtilisateurRef.current.setLngLat(versLngLat(positionUtilisateur));
+  }, [positionUtilisateur]);
+
+  useEffect(() => {
+    const carte = carteRef.current;
+
+    if (!carte || !positionUtilisateur || cleRecentrage === 0) {
+      return;
+    }
+
+    carte.easeTo({
+      center: versLngLat(positionUtilisateur),
+      duration: 500,
+      pitch: itineraire ? PITCH_NAVIGATION : carte.getPitch(),
+      zoom: itineraire ? ZOOM_NAVIGATION : Math.max(carte.getZoom(), 16),
+    });
+  }, [cleRecentrage, itineraire, positionUtilisateur]);
+
+  useEffect(() => {
+    const carte = carteRef.current;
     const points = itineraire?.coordonnees ?? [];
     const premierPoint = points.at(0);
     const deuxiemePoint = points.at(1);
@@ -202,6 +242,49 @@ export function Carte({
   }, [depart, itineraire, positionUtilisateur]);
 
   return <div ref={conteneurRef} style={{ flex: 1 }} />;
+}
+
+function creerMarqueurUtilisateur() {
+  const element = document.createElement('div');
+  const conteneur = document.createElement('div');
+  const image = document.createElement('img');
+  const source = obtenirUrlMarqueurUtilisateur();
+
+  element.style.position = 'relative';
+  element.style.width = '42px';
+  element.style.height = '42px';
+  element.style.pointerEvents = 'none';
+  element.style.zIndex = '140';
+
+  conteneur.style.position = 'relative';
+  conteneur.style.width = '66px';
+  conteneur.style.height = '66px';
+  conteneur.style.display = 'flex';
+  conteneur.style.alignItems = 'center';
+  conteneur.style.justifyContent = 'center';
+  conteneur.style.filter = 'drop-shadow(0 0 18px rgba(30,144,255,0.62))';
+
+  image.src = source;
+  image.alt = '';
+  image.style.width = '66px';
+  image.style.height = '66px';
+  image.style.objectFit = 'contain';
+  image.style.pointerEvents = 'none';
+
+  conteneur.appendChild(image);
+  element.appendChild(conteneur);
+
+  return element;
+}
+
+function obtenirUrlMarqueurUtilisateur() {
+  const source = marqueurUtilisateur as string | { uri?: string };
+
+  if (typeof source === 'string') {
+    return source;
+  }
+
+  return source.uri ?? '';
 }
 
 function creerMarqueur(
