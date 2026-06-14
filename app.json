@@ -6,10 +6,26 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "plugins": [
+      "@maplibre/maplibre-react-native",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Autoriser Projet-test-gps a utiliser votre position."
+        }
+      ]
+    ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Autoriser Projet-test-gps a utiliser votre position."
+      }
     },
     "android": {
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -19,7 +35,16 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "backgroundColor": "#ffffff",
+      "display": "standalone",
+      "favicon": "./assets/favicon.png",
+      "lang": "fr",
+      "name": "Projet-test-gps",
+      "orientation": "portrait",
+      "scope": "/",
+      "startUrl": "/",
+      "themeColor": "#111827",
+      "shortName": "GPS"
     }
   }
 }
