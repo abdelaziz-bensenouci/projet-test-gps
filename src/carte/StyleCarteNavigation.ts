@@ -1,6 +1,7 @@
 import type { StyleSpecification } from '@maplibre/maplibre-react-native';
 
 import { CLE_MAPTILER } from '../constantes/VariablesEnvironnement';
+import type { ModeCarte } from '../types/ModeCarte';
 
 const URL_TUILES_MAPTILER =
   CLE_MAPTILER ? `https://api.maptiler.com/tiles/v3/tiles.json?key=${CLE_MAPTILER}` : '';
@@ -8,10 +9,54 @@ const URL_TUILES_MAPTILER =
 const URL_GLYPHES_MAPTILER =
   CLE_MAPTILER ? `https://api.maptiler.com/fonts/{fontstack}/{range}.pbf?key=${CLE_MAPTILER}` : '';
 
-export function creerStyleCarteNavigation(): StyleSpecification | null {
+type PaletteCarteNavigation = {
+  fond: string;
+  eau: string;
+  parcs: string;
+  routeMotorway: string;
+  routePrimary: string;
+  routeSecondary: string;
+  routeTertiary: string;
+  routeMinor: string;
+  texteRue: string;
+  haloRue: string;
+};
+
+const PALETTES_CARTE: Record<ModeCarte, PaletteCarteNavigation> = {
+  clair: {
+    fond: '#f4f7f8',
+    eau: '#cdebf7',
+    parcs: '#dff2df',
+    routeMotorway: '#ffffff',
+    routePrimary: '#f8fafc',
+    routeSecondary: '#d8dee5',
+    routeTertiary: '#cbd3dc',
+    routeMinor: '#c1cad4',
+    texteRue: '#334155',
+    haloRue: '#f4f7f8',
+  },
+  sombre: {
+    fond: '#101a2a',
+    eau: '#0b314a',
+    parcs: '#16382f',
+    routeMotorway: '#d7e2ec',
+    routePrimary: '#ccd8e3',
+    routeSecondary: '#c2cfdb',
+    routeTertiary: '#b7c5d2',
+    routeMinor: '#a9b7c5',
+    texteRue: '#e8f1f8',
+    haloRue: '#101a2a',
+  },
+};
+
+export function creerStyleCarteNavigation(
+  modeCarte: ModeCarte,
+): StyleSpecification | null {
   if (!CLE_MAPTILER) {
     return null;
   }
+
+  const palette = PALETTES_CARTE[modeCarte];
 
   return {
     version: 8,
@@ -27,14 +72,14 @@ export function creerStyleCarteNavigation(): StyleSpecification | null {
       {
         id: 'fond',
         type: 'background',
-        paint: { 'background-color': '#101a2a' },
+        paint: { 'background-color': palette.fond },
       },
       {
         id: 'eau',
         type: 'fill',
         source: 'openmaptiles',
         'source-layer': 'water',
-        paint: { 'fill-color': '#0b314a' },
+        paint: { 'fill-color': palette.eau },
       },
       {
         id: 'parcs-principaux',
@@ -42,7 +87,7 @@ export function creerStyleCarteNavigation(): StyleSpecification | null {
         source: 'openmaptiles',
         'source-layer': 'park',
         paint: {
-          'fill-color': '#16382f',
+          'fill-color': palette.parcs,
           'fill-opacity': 0.55,
         },
       },
@@ -54,7 +99,7 @@ export function creerStyleCarteNavigation(): StyleSpecification | null {
         filter: ['==', ['get', 'class'], 'motorway'],
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
-          'line-color': '#d7e2ec',
+          'line-color': palette.routeMotorway,
           'line-opacity': 0.8,
           'line-width': ['interpolate', ['linear'], ['zoom'], 10, 2, 14, 5, 18, 12],
         },
@@ -67,7 +112,7 @@ export function creerStyleCarteNavigation(): StyleSpecification | null {
         filter: ['==', ['get', 'class'], 'primary'],
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
-          'line-color': '#ccd8e3',
+          'line-color': palette.routePrimary,
           'line-opacity': 0.72,
           'line-width': ['interpolate', ['linear'], ['zoom'], 10, 1.6, 14, 4, 18, 10],
         },
@@ -80,9 +125,9 @@ export function creerStyleCarteNavigation(): StyleSpecification | null {
         filter: ['==', ['get', 'class'], 'secondary'],
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
-          'line-color': '#c2cfdb',
-          'line-opacity': 0.58,
-          'line-width': ['interpolate', ['linear'], ['zoom'], 10, 1, 14, 2.6, 18, 7],
+          'line-color': palette.routeSecondary,
+          'line-opacity': 0.48,
+          'line-width': ['interpolate', ['linear'], ['zoom'], 10, 0.8, 14, 2.2, 18, 6],
         },
       },
       {
@@ -93,9 +138,9 @@ export function creerStyleCarteNavigation(): StyleSpecification | null {
         filter: ['==', ['get', 'class'], 'tertiary'],
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
-          'line-color': '#b7c5d2',
-          'line-opacity': 0.48,
-          'line-width': ['interpolate', ['linear'], ['zoom'], 11, 0.8, 14, 2, 18, 5],
+          'line-color': palette.routeTertiary,
+          'line-opacity': 0.28,
+          'line-width': ['interpolate', ['linear'], ['zoom'], 11, 0.5, 14, 1.4, 18, 3.2],
         },
       },
       {
@@ -103,13 +148,13 @@ export function creerStyleCarteNavigation(): StyleSpecification | null {
         type: 'line',
         source: 'openmaptiles',
         'source-layer': 'transportation',
-        minzoom: 15,
-        filter: ['in', ['get', 'class'], ['literal', ['minor', 'service', 'track', 'path']]],
+        minzoom: 16,
+        filter: ['==', ['get', 'class'], 'minor'],
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
-          'line-color': '#a9b7c5',
-          'line-opacity': 0.18,
-          'line-width': ['interpolate', ['linear'], ['zoom'], 15, 0.8, 18, 2.6],
+          'line-color': palette.routeMinor,
+          'line-opacity': 0.08,
+          'line-width': ['interpolate', ['linear'], ['zoom'], 16, 0.4, 18, 1.4],
         },
       },
       {
@@ -126,8 +171,8 @@ export function creerStyleCarteNavigation(): StyleSpecification | null {
           'text-rotation-alignment': 'map',
         },
         paint: {
-          'text-color': '#e8f1f8',
-          'text-halo-color': '#101a2a',
+          'text-color': palette.texteRue,
+          'text-halo-color': palette.haloRue,
           'text-halo-width': 2,
           'text-halo-blur': 0.8,
         },

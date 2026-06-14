@@ -6,7 +6,7 @@ import {
   CENTRE_CARTE_INITIAL,
   OFFSET_VERTICAL_NAVIGATION,
   PITCH_NAVIGATION,
-  STYLE_CARTE,
+  obtenirStyleCarte,
   ZOOM_CARTE_INITIAL,
   ZOOM_NAVIGATION,
 } from '../constantes/CarteConstantes';
@@ -20,9 +20,11 @@ export function Carte({
   depart,
   destination,
   itineraire,
+  modeCarte,
   positionUtilisateur,
 }: ProprietesCarte) {
   const cameraRef = useRef<CameraRef>(null);
+  const styleCarte = useMemo(() => obtenirStyleCarte(modeCarte), [modeCarte]);
   const geoJsonItineraire = useMemo(
     () => creerGeoJsonItineraire(itineraire),
     [itineraire],
@@ -51,7 +53,7 @@ export function Carte({
   }, [depart, itineraire, positionUtilisateur]);
 
   return (
-    <Map attribution mapStyle={STYLE_CARTE} style={stylesCarte.carte}>
+    <Map attribution mapStyle={styleCarte} style={stylesCarte.carte}>
       <Camera
         initialViewState={{
           center: versLngLat(positionUtilisateur ?? CENTRE_CARTE_INITIAL),
@@ -64,10 +66,10 @@ export function Carte({
           id="halo-itineraire"
           type="line"
           paint={{
-            'line-blur': 6,
+            'line-blur': 10,
             'line-color': '#22d3ee',
-            'line-opacity': 0.28,
-            'line-width': 40,
+            'line-opacity': 0.33,
+            'line-width': 48,
           }}
         />
         <Layer
@@ -75,7 +77,7 @@ export function Carte({
           type="line"
           paint={{
             'line-color': '#22d3ee',
-            'line-width': 20,
+            'line-width': 22,
           }}
         />
       </GeoJSONSource>

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
@@ -6,7 +6,7 @@ import {
   CENTRE_CARTE_INITIAL,
   OFFSET_VERTICAL_NAVIGATION,
   PITCH_NAVIGATION,
-  STYLE_CARTE,
+  obtenirStyleCarte,
   ZOOM_CARTE_INITIAL,
   ZOOM_NAVIGATION,
 } from '../constantes/CarteConstantes';
@@ -17,11 +17,13 @@ export function Carte({
   depart,
   destination,
   itineraire,
+  modeCarte,
   positionUtilisateur,
 }: ProprietesCarte) {
   const conteneurRef = useRef<HTMLDivElement | null>(null);
   const carteRef = useRef<maplibregl.Map | null>(null);
   const marqueursRef = useRef<maplibregl.Marker[]>([]);
+  const styleCarte = useMemo(() => obtenirStyleCarte(modeCarte), [modeCarte]);
 
   useEffect(() => {
     if (!conteneurRef.current || carteRef.current) {
@@ -30,7 +32,7 @@ export function Carte({
 
     carteRef.current = new maplibregl.Map({
       container: conteneurRef.current,
-      style: STYLE_CARTE,
+      style: styleCarte,
       center: versLngLat(positionUtilisateur ?? CENTRE_CARTE_INITIAL),
       zoom: ZOOM_CARTE_INITIAL,
     });
@@ -40,6 +42,14 @@ export function Carte({
       carteRef.current = null;
     };
   }, [positionUtilisateur]);
+
+  useEffect(() => {
+    const carte = carteRef.current;
+
+    if (carte) {
+      carte.setStyle(styleCarte);
+    }
+  }, [styleCarte]);
 
   useEffect(() => {
     const carte = carteRef.current;
@@ -65,17 +75,17 @@ export function Carte({
           type: 'line',
           source: 'itineraire',
           paint: {
-            'line-blur': 6,
+            'line-blur': 10,
             'line-color': '#22d3ee',
-            'line-opacity': 0.28,
-            'line-width': 40,
+            'line-opacity': 0.33,
+            'line-width': 48,
           },
         });
         carte.addLayer({
           id: 'trace-itineraire',
           type: 'line',
           source: 'itineraire',
-          paint: { 'line-color': '#22d3ee', 'line-width': 20 },
+          paint: { 'line-color': '#22d3ee', 'line-width': 22 },
         });
         return;
       }
@@ -89,7 +99,7 @@ export function Carte({
     } else {
       carte.once('load', appliquerTrace);
     }
-  }, [itineraire]);
+  }, [itineraire, styleCarte]);
 
   useEffect(() => {
     const carte = carteRef.current;

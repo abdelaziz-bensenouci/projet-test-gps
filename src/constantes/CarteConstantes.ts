@@ -1,12 +1,16 @@
 import { CLE_MAPTILER } from './VariablesEnvironnement';
 import { creerStyleCarteNavigation } from '../carte/StyleCarteNavigation';
 import type { Coordonnees } from '../types/Coordonnees';
+import type { ModeCarte } from '../types/ModeCarte';
 
-export const STYLE_CARTE =
-  creerStyleCarteNavigation() ??
+export function obtenirStyleCarte(modeCarte: ModeCarte) {
+  return (
+    creerStyleCarteNavigation(modeCarte) ??
   (CLE_MAPTILER
     ? `https://api.maptiler.com/maps/streets-v2/style.json?key=${CLE_MAPTILER}`
-    : 'https://demotiles.maplibre.org/style.json');
+      : 'https://demotiles.maplibre.org/style.json')
+  );
+}
 
 export const CENTRE_CARTE_INITIAL: Coordonnees = {
   longitude: 2.3522,

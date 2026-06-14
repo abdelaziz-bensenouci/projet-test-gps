@@ -1,10 +1,12 @@
 import type { AdresseGeocodee } from '../types/AdresseGeocodee';
 import type { Coordonnees } from '../types/Coordonnees';
 import type { Itineraire } from '../types/Itineraire';
+import type { ModeCarte } from '../types/ModeCarte';
 
 export type ProprietesCarte = {
   depart: AdresseGeocodee | null;
   destination: AdresseGeocodee | null;
   itineraire: Itineraire | null;
+  modeCarte: ModeCarte;
   positionUtilisateur: Coordonnees | null;
 };
