@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { SafeAreaView, StyleSheet, View } from 'react-native';
 
 import { Carte } from '../carte/Carte';
@@ -10,7 +10,11 @@ import { BoutonsFlottantsNavigation } from '../composants/BoutonsFlottantsNaviga
 import { PanneauTrajet } from '../composants/PanneauTrajet';
 import { usePositionUtilisateur } from '../hooks/usePositionUtilisateur';
 import { useRechercheItineraire } from '../hooks/useRechercheItineraire';
+import { analyserNavigationGps } from '../navigationGps/navigationGpsAvancee';
+import type { Coordonnees } from '../types/Coordonnees';
 import type { ModeCarte } from '../types/ModeCarte';
+
+const COOLDOWN_RECALCUL_NAVIGATION_MS = 12000;
 
 export function EcranCarte() {
   const modeCarte: ModeCarte = 'clair';
@@ -19,7 +23,14 @@ export function EcranCarte() {
   const [navigationPleinEcran, setNavigationPleinEcran] = useState(false);
   const [pleinEcranModifieParUtilisateur, setPleinEcranModifieParUtilisateur] =
     useState(false);
-  const { positionUtilisateur } = usePositionUtilisateur();
+  const [suiviCameraActif, setSuiviCameraActif] = useState(true);
+  const positionPrecedenteRef = useRef<Coordonnees | null>(null);
+  const dernierRecalculNavigationRef = useRef(0);
+  const {
+    directionUtilisateur,
+    positionUtilisateur,
+    precisionUtilisateur,
+  } = usePositionUtilisateur();
   const recherche = useRechercheItineraire();
   const trajetActif = Boolean(recherche.itineraire);
   const ouvrirPanneauTrajet = () => {
@@ -33,7 +44,11 @@ export function EcranCarte() {
     void recherche.rechercherItineraireDepuisPosition(positionUtilisateur);
   };
   const recentrerCarte = () => {
+    setSuiviCameraActif(true);
     setCleRecentrage((cleActuelle) => cleActuelle + 1);
+  };
+  const desactiverSuiviCamera = () => {
+    setSuiviCameraActif(false);
   };
   const basculerPleinEcran = () => {
     setPleinEcranModifieParUtilisateur(true);
@@ -44,16 +59,60 @@ export function EcranCarte() {
     setNavigationPleinEcran(false);
     setPleinEcranModifieParUtilisateur(false);
     setPanneauTrajetOuvert(false);
+    setSuiviCameraActif(true);
   };
 
   useEffect(() => {
     if (recherche.itineraire) {
       setPanneauTrajetOuvert(false);
+      setSuiviCameraActif(true);
       if (!pleinEcranModifieParUtilisateur) {
         setNavigationPleinEcran(true);
       }
     }
   }, [pleinEcranModifieParUtilisateur, recherche.itineraire]);
+
+  useEffect(() => {
+    const positionPrecedente = positionPrecedenteRef.current;
+    positionPrecedenteRef.current = positionUtilisateur;
+
+    if (!recherche.itineraire || !positionUtilisateur) {
+      return;
+    }
+
+    const analyse = analyserNavigationGps({
+      gps: {
+        directionDegres: directionUtilisateur,
+        position: positionUtilisateur,
+        precisionMetres: precisionUtilisateur,
+      },
+      positionPrecedente,
+      trace: recherche.itineraire.coordonnees,
+    });
+
+    if (!analyse || (!analyse.horsTrace && !analyse.mauvaisSens)) {
+      return;
+    }
+
+    const maintenant = Date.now();
+
+    if (
+      maintenant - dernierRecalculNavigationRef.current <
+      COOLDOWN_RECALCUL_NAVIGATION_MS
+    ) {
+      return;
+    }
+
+    dernierRecalculNavigationRef.current = maintenant;
+    setPleinEcranModifieParUtilisateur(false);
+    void recherche.rechercherItineraireDepuisPosition(positionUtilisateur);
+  }, [
+    directionUtilisateur,
+    positionUtilisateur,
+    precisionUtilisateur,
+    recherche,
+    recherche.itineraire,
+  ]);
 
   return (
     <SafeAreaView style={styles.page}>
@@ -62,10 +121,14 @@ export function EcranCarte() {
           cleRecentrage={cleRecentrage}
           depart={recherche.depart}
           destination={recherche.destination}
+          directionUtilisateur={directionUtilisateur}
           itineraire={recherche.itineraire}
           modeCarte={modeCarte}
           navigationPleinEcran={navigationPleinEcran}
+          onInteractionUtilisateurCarte={desactiverSuiviCamera}
           positionUtilisateur={positionUtilisateur}
+          precisionUtilisateur={precisionUtilisateur}
+          suiviCameraActif={suiviCameraActif}
         />
         <View style={styles.banniereFlottante}>
           {recherche.itineraire ? (

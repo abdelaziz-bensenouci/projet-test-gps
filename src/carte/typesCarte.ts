@@ -10,5 +10,9 @@ export type ProprietesCarte = {
   cleRecentrage: number;
   modeCarte: ModeCarte;
   navigationPleinEcran: boolean;
+  directionUtilisateur: number | null;
+  onInteractionUtilisateurCarte: () => void;
   positionUtilisateur: Coordonnees | null;
+  precisionUtilisateur: number | null;
+  suiviCameraActif: boolean;
 };

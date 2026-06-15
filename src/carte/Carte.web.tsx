@@ -16,6 +16,7 @@ import {
   ZOOM_NAVIGATION_REDUIT,
 } from '../constantes/CarteConstantes';
 import { calculerBearing, versLngLat } from '../utilitaires/coordonnees';
+import { analyserNavigationGps } from '../navigationGps/navigationGpsAvancee';
 import { adapterTraceSurAxesRoutiers } from './centrageTrace/adapterTraceSurAxesRoutiers';
 import type { ProprietesCarte } from './typesCarte';
 import type { Coordonnees } from '../types/Coordonnees';
@@ -24,22 +25,47 @@ export function Carte({
   cleRecentrage,
   depart,
   destination,
+  directionUtilisateur,
   itineraire,
   modeCarte,
   navigationPleinEcran,
+  onInteractionUtilisateurCarte,
   positionUtilisateur,
+  precisionUtilisateur,
+  suiviCameraActif,
 }: ProprietesCarte) {
   const conteneurRef = useRef<HTMLDivElement | null>(null);
   const carteRef = useRef<maplibregl.Map | null>(null);
   const marqueursRef = useRef<maplibregl.Marker[]>([]);
   const marqueurUtilisateurRef = useRef<maplibregl.Marker | null>(null);
   const [traceAffiche, setTraceAffiche] = useState<Coordonnees[]>([]);
+  const positionPrecedenteRef = useRef<Coordonnees | null>(null);
   const navigationActive = Boolean(itineraire);
   const styleCarte = useMemo(
     () => obtenirStyleCarte(modeCarte, navigationActive),
     [modeCarte, navigationActive],
   );
   const styleAppliqueRef = useRef(styleCarte);
+  const analyseNavigation = useMemo(() => {
+    const positionPrecedente = positionPrecedenteRef.current;
+
+    positionPrecedenteRef.current = positionUtilisateur;
+
+    return analyserNavigationGps({
+      gps: positionUtilisateur
+        ? {
+            directionDegres: directionUtilisateur,
+            position: positionUtilisateur,
+            precisionMetres: precisionUtilisateur,
+          }
+        : null,
+      positionPrecedente,
+      trace: traceAffiche,
+    });
+  }, [directionUtilisateur, positionUtilisateur, precisionUtilisateur, traceAffiche]);
+  const positionUtilisateurAffichee =
+    analyseNavigation?.positionAffichee ?? positionUtilisateur;
+  const bearingNavigation = analyseNavigation?.bearingNavigation;
 
   useEffect(() => {
     if (!conteneurRef.current || carteRef.current) {
@@ -57,7 +83,33 @@ export function Carte({
       carteRef.current?.remove();
       carteRef.current = null;
     };
-  }, [positionUtilisateur]);
+  }, []);
+
+  useEffect(() => {
+    const carte = carteRef.current;
+
+    if (!carte) {
+      return;
+    }
+
+    const interactionUtilisateur = () => {
+      onInteractionUtilisateurCarte();
+    };
+
+    carte.on('dragstart', interactionUtilisateur);
+    carte.on('mousedown', interactionUtilisateur);
+    carte.on('pitchstart', interactionUtilisateur);
+    carte.on('rotatestart', interactionUtilisateur);
+    carte.on('touchstart', interactionUtilisateur);
+
+    return () => {
+      carte.off('dragstart', interactionUtilisateur);
+      carte.off('mousedown', interactionUtilisateur);
+      carte.off('pitchstart', interactionUtilisateur);
+      carte.off('rotatestart', interactionUtilisateur);
+      carte.off('touchstart', interactionUtilisateur);
+    };
+  }, [onInteractionUtilisateurCarte]);
 
   useEffect(() => {
     let actif = true;
@@ -181,7 +233,7 @@ export function Carte({
   useEffect(() => {
     const carte = carteRef.current;
 
-    if (!carte || !positionUtilisateur) {
+    if (!carte || !positionUtilisateurAffichee) {
       marqueurUtilisateurRef.current?.remove();
       marqueurUtilisateurRef.current = null;
       return;
@@ -192,23 +244,24 @@ export function Carte({
         anchor: 'center',
         element: creerMarqueurUtilisateur(),
       })
-        .setLngLat(versLngLat(positionUtilisateur))
+        .setLngLat(versLngLat(positionUtilisateurAffichee))
         .addTo(carte);
       return;
     }
 
-    marqueurUtilisateurRef.current.setLngLat(versLngLat(positionUtilisateur));
-  }, [positionUtilisateur]);
+    marqueurUtilisateurRef.current.setLngLat(versLngLat(positionUtilisateurAffichee));
+  }, [positionUtilisateurAffichee]);
 
   useEffect(() => {
     const carte = carteRef.current;
 
-    if (!carte || !positionUtilisateur || cleRecentrage === 0) {
+    if (!carte || !positionUtilisateurAffichee || cleRecentrage === 0) {
       return;
     }
 
     carte.easeTo({
-      center: versLngLat(positionUtilisateur),
+      bearing: itineraire ? bearingNavigation ?? carte.getBearing() : carte.getBearing(),
+      center: versLngLat(positionUtilisateurAffichee),
       duration: 500,
       pitch: itineraire
         ? obtenirPitchNavigation(navigationPleinEcran)
@@ -217,7 +270,13 @@ export function Carte({
         ? obtenirZoomNavigation(navigationPleinEcran)
         : Math.max(carte.getZoom(), 16),
     });
-  }, [cleRecentrage, itineraire, navigationPleinEcran, positionUtilisateur]);
+  }, [
+    bearingNavigation,
+    cleRecentrage,
+    itineraire,
+    navigationPleinEcran,
+    positionUtilisateurAffichee,
+  ]);
 
   useEffect(() => {
     const carte = carteRef.current;
@@ -225,10 +284,10 @@ export function Carte({
     const premierPoint = points.at(0);
     const deuxiemePoint = points.at(1);
 
-    if (carte && premierPoint && deuxiemePoint) {
+    if (carte && premierPoint && deuxiemePoint && suiviCameraActif) {
       carte.easeTo({
-        center: versLngLat(positionUtilisateur ?? depart?.coordonnees ?? premierPoint),
-        bearing: calculerBearing(premierPoint, deuxiemePoint),
+        center: versLngLat(positionUtilisateurAffichee ?? depart?.coordonnees ?? premierPoint),
+        bearing: bearingNavigation ?? calculerBearing(premierPoint, deuxiemePoint),
         pitch: obtenirPitchNavigation(navigationPleinEcran),
         zoom: obtenirZoomNavigation(navigationPleinEcran),
         padding: {
@@ -240,7 +299,28 @@ export function Carte({
         duration: 760,
       });
     }
-  }, [depart, itineraire, navigationPleinEcran, positionUtilisateur]);
+  }, [
+    bearingNavigation,
+    depart,
+    itineraire,
+    navigationPleinEcran,
+    positionUtilisateurAffichee,
+    suiviCameraActif,
+  ]);
+
+  useEffect(() => {
+    const carte = carteRef.current;
+
+    if (!carte || itineraire || !positionUtilisateurAffichee || !suiviCameraActif) {
+      return;
+    }
+
+    carte.easeTo({
+      center: versLngLat(positionUtilisateurAffichee),
+      duration: 500,
+      zoom: Math.max(carte.getZoom(), 16),
+    });
+  }, [itineraire, positionUtilisateurAffichee, suiviCameraActif]);
 
   return <div ref={conteneurRef} style={{ flex: 1 }} />;
 }
