@@ -33,6 +33,7 @@ export function Carte({
   modeCarte,
   navigationPleinEcran,
   onInteractionUtilisateurCarte,
+  onTraceItinerairePrete,
   positionUtilisateur,
   precisionUtilisateur,
   suiviCameraActif,
@@ -43,7 +44,7 @@ export function Carte({
   const marqueurUtilisateurRef = useRef<maplibregl.Marker | null>(null);
   const [traceAffiche, setTraceAffiche] = useState<Coordonnees[]>([]);
   const positionPrecedenteRef = useRef<Coordonnees | null>(null);
-  const navigationActive = Boolean(itineraire);
+  const navigationActive = Boolean(itineraire && traceAffiche.length >= 2);
   const styleCarte = useMemo(
     () => obtenirStyleCarte(modeCarte, navigationActive),
     [modeCarte, navigationActive],
@@ -122,10 +123,15 @@ export function Carte({
   useEffect(() => {
     let actif = true;
     const pointsOsrm = itineraire?.coordonnees ?? [];
+    setTraceAffiche([]);
+    onTraceItinerairePrete(false);
 
     async function preparerTraceAffiche() {
       if (!CENTRAGE_TRACE_ACTIF || pointsOsrm.length < 2) {
-        setTraceAffiche(pointsOsrm);
+        if (actif) {
+          setTraceAffiche(pointsOsrm);
+          onTraceItinerairePrete(pointsOsrm.length >= 2);
+        }
         return;
       }
 
@@ -133,13 +139,15 @@ export function Carte({
         const traceRecentree = await adapterTraceSurAxesRoutiers(pointsOsrm);
 
         if (actif) {
-          setTraceAffiche(
-            traceRecentree.length >= 2 ? traceRecentree : pointsOsrm,
-          );
+          const traceFinale =
+            traceRecentree.length >= 2 ? traceRecentree : pointsOsrm;
+          setTraceAffiche(traceFinale);
+          onTraceItinerairePrete(traceFinale.length >= 2);
         }
       } catch {
         if (actif) {
           setTraceAffiche(pointsOsrm);
+          onTraceItinerairePrete(pointsOsrm.length >= 2);
         }
       }
     }
@@ -149,7 +157,7 @@ export function Carte({
     return () => {
       actif = false;
     };
-  }, [itineraire]);
+  }, [itineraire, onTraceItinerairePrete]);
 
   useEffect(() => {
     const carte = carteRef.current;
@@ -225,18 +233,20 @@ export function Carte({
     marqueursRef.current.forEach((marqueur) => marqueur.remove());
     marqueursRef.current = [];
 
-    if (depart && !estDepartPositionActuelle(depart.libelle)) {
+    const tracePrete = Boolean(itineraire && traceAfficheeRestante.length >= 2);
+
+    if (tracePrete && depart && !estDepartPositionActuelle(depart.libelle)) {
       marqueursRef.current.push(
         creerMarqueur(carte, depart.coordonnees, '#2563eb'),
       );
     }
 
-    if (destination) {
+    if (tracePrete && destination) {
       marqueursRef.current.push(
         creerMarqueurArrivee(carte, destination.coordonnees, destination.libelle),
       );
     }
-  }, [depart, destination]);
+  }, [depart, destination, itineraire, traceAfficheeRestante]);
 
   useEffect(() => {
     const carte = carteRef.current;

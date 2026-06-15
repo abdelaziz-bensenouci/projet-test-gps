@@ -26,6 +26,7 @@ export function EcranCarte() {
   const [recalculNavigationEnCours, setRecalculNavigationEnCours] =
     useState(false);
   const [suiviCameraActif, setSuiviCameraActif] = useState(true);
+  const [traceItinerairePrete, setTraceItinerairePrete] = useState(false);
   const positionPrecedenteRef = useRef<Coordonnees | null>(null);
   const dernierRecalculNavigationRef = useRef(0);
   const {
@@ -35,7 +36,16 @@ export function EcranCarte() {
   } = usePositionUtilisateur();
   const recherche = useRechercheItineraire();
   const itinerairePrecedentRef = useRef(recherche.itineraire);
-  const trajetActif = Boolean(recherche.itineraire);
+  const itinerairePretAffichage = Boolean(
+    recherche.itineraire && traceItinerairePrete,
+  );
+  const trajetActif = itinerairePretAffichage;
+  const calculItineraireEnCours =
+    recherche.etatRecherche === 'chargement' ||
+    Boolean(recherche.itineraire && !traceItinerairePrete);
+  const messageChargementItineraire = recalculNavigationEnCours
+    ? "Recalcul d'itinéraire en cours"
+    : 'Calcul en cours de votre itinéraire';
   const ouvrirPanneauTrajet = () => {
     setPanneauTrajetOuvert(true);
   };
@@ -43,6 +53,7 @@ export function EcranCarte() {
     setPanneauTrajetOuvert(false);
   };
   const rechercherDepuisPanneauTrajet = () => {
+    setTraceItinerairePrete(false);
     setSuiviCameraActif(true);
     setPleinEcranModifieParUtilisateur(false);
     void recherche.rechercherItineraireDepuisPosition(positionUtilisateur);
@@ -60,6 +71,7 @@ export function EcranCarte() {
   };
   const arreterNavigation = () => {
     recherche.arreterItineraire();
+    setTraceItinerairePrete(false);
     setNavigationPleinEcran(false);
     setPleinEcranModifieParUtilisateur(false);
     setPanneauTrajetOuvert(false);
@@ -71,7 +83,7 @@ export function EcranCarte() {
     const itinerairePrecedent = itinerairePrecedentRef.current;
     itinerairePrecedentRef.current = recherche.itineraire;
 
-    if (recherche.itineraire) {
+    if (itinerairePretAffichage) {
       setPanneauTrajetOuvert(false);
       if (!itinerairePrecedent) {
         setSuiviCameraActif(true);
@@ -80,7 +92,7 @@ export function EcranCarte() {
         setNavigationPleinEcran(true);
       }
     }
-  }, [pleinEcranModifieParUtilisateur, recherche.itineraire]);
+  }, [itinerairePretAffichage, pleinEcranModifieParUtilisateur, recherche.itineraire]);
 
   useEffect(() => {
     const positionPrecedente = positionPrecedenteRef.current;
@@ -142,12 +154,13 @@ export function EcranCarte() {
           modeCarte={modeCarte}
           navigationPleinEcran={navigationPleinEcran}
           onInteractionUtilisateurCarte={desactiverSuiviCamera}
+          onTraceItinerairePrete={setTraceItinerairePrete}
           positionUtilisateur={positionUtilisateur}
           precisionUtilisateur={precisionUtilisateur}
           suiviCameraActif={suiviCameraActif}
         />
         <View style={styles.banniereFlottante}>
-          {recherche.itineraire ? (
+          {itinerairePretAffichage && recherche.itineraire ? (
             <BanniereNavigation itineraire={recherche.itineraire} />
           ) : (
             <BanniereSignalements
@@ -186,10 +199,10 @@ export function EcranCarte() {
             trajetActif={trajetActif}
           />
         </View>
-        {recalculNavigationEnCours ? (
-          <View style={styles.messageRecalcul}>
-            <Text style={styles.texteMessageRecalcul}>
-              Recalcul d'itinéraire en cours
+        {calculItineraireEnCours ? (
+          <View style={styles.messageChargement}>
+            <Text style={styles.texteMessageChargement}>
+              {messageChargementItineraire}
             </Text>
           </View>
         ) : null}
@@ -247,7 +260,7 @@ const styles = StyleSheet.create({
     right: 8,
     zIndex: 24,
   },
-  messageRecalcul: {
+  messageChargement: {
     alignItems: 'center',
     backgroundColor: 'rgba(5,10,20,0.78)',
     borderColor: 'rgba(143,234,255,0.26)',
@@ -262,7 +275,7 @@ const styles = StyleSheet.create({
     top: 140,
     zIndex: 1200,
   },
-  texteMessageRecalcul: {
+  texteMessageChargement: {
     color: '#F3FCFF',
     fontSize: 13,
     fontWeight: '900',

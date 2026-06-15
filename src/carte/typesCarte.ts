@@ -11,6 +11,7 @@ export type ProprietesCarte = {
   modeCarte: ModeCarte;
   navigationPleinEcran: boolean;
   directionUtilisateur: number | null;
+  onTraceItinerairePrete: (prete: boolean) => void;
   onInteractionUtilisateurCarte: () => void;
   positionUtilisateur: Coordonnees | null;
   precisionUtilisateur: number | null;
