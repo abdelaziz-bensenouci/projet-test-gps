@@ -296,10 +296,10 @@ function ajouterCouchesTrace(carte: maplibregl.Map) {
       source: 'itineraire',
       layout: { 'line-cap': 'round', 'line-join': 'round' },
       paint: {
-        'line-blur': 2.4,
-        'line-color': 'rgba(34,211,238,0.14)',
-        'line-opacity': 0.22,
-        'line-width': 22,
+        'line-blur': 3.2,
+        'line-color': 'rgba(34,211,238,0.32)',
+        'line-opacity': 0.32,
+        'line-width': 20,
       },
     });
   }
@@ -311,10 +311,10 @@ function ajouterCouchesTrace(carte: maplibregl.Map) {
       source: 'itineraire',
       layout: { 'line-cap': 'round', 'line-join': 'round' },
       paint: {
-        'line-blur': 1.2,
-        'line-color': 'rgba(34,211,238,0.36)',
-        'line-opacity': 0.48,
-        'line-width': 17,
+        'line-blur': 1.6,
+        'line-color': 'rgba(34,211,238,0.58)',
+        'line-opacity': 0.58,
+        'line-width': 13,
       },
     });
   }

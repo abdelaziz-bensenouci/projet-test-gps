@@ -12,6 +12,7 @@ const URL_GLYPHES_MAPTILER =
   CLE_MAPTILER ? `https://api.maptiler.com/fonts/{fontstack}/{range}.pbf?key=${CLE_MAPTILER}` : '';
 
 const CLASSES_PIETONNES_MASQUEES = [
+  'foot',
   'footway',
   'path',
   'pedestrian',
@@ -88,7 +89,7 @@ function creerCouchesNavigationMinimalistes(
       if (coucheSansPietons.type === 'background') {
         return {
           ...coucheSansPietons,
-          paint: { ...coucheSansPietons.paint, 'background-color': '#EEF7FA' },
+          paint: { ...coucheSansPietons.paint, 'background-color': '#F2F4F5' },
         } as typeof coucheSansPietons;
       }
 
@@ -102,14 +103,22 @@ function creerCouchesNavigationMinimalistes(
       if (coucheSansPietons.type === 'fill' && id.includes('water')) {
         return {
           ...coucheSansPietons,
-          paint: { ...coucheSansPietons.paint, 'fill-opacity': 0.42 },
+          paint: {
+            ...coucheSansPietons.paint,
+            'fill-color': '#DDE8EC',
+            'fill-opacity': 0.34,
+          },
         } as typeof coucheSansPietons;
       }
 
       if (coucheSansPietons.type === 'line' && id.includes('water')) {
         return {
           ...coucheSansPietons,
-          paint: { ...coucheSansPietons.paint, 'line-opacity': 0.42 },
+          paint: {
+            ...coucheSansPietons.paint,
+            'line-color': '#DDE8EC',
+            'line-opacity': 0.34,
+          },
         } as typeof coucheSansPietons;
       }
 
@@ -173,8 +182,19 @@ function appliquerStyleRouteNavigation<T extends StyleSpecification['layers'][nu
       ...couche,
       paint: {
         ...couche.paint,
-        'line-color': '#7C8992',
+        'line-color': '#AEB6BA',
         'line-opacity': 0.92,
+      },
+    } as unknown as T;
+  }
+
+  if (id.includes('major-road-casing')) {
+    return {
+      ...couche,
+      paint: {
+        ...couche.paint,
+        'line-color': '#8D969B',
+        'line-opacity': 0.58,
       },
     } as unknown as T;
   }
@@ -187,7 +207,7 @@ function appliquerStyleRouteNavigation<T extends StyleSpecification['layers'][nu
       ...couche,
       paint: {
         ...paintSansTirets,
-        'line-color': '#8F9AA2',
+        'line-color': '#C3C9CC',
         'line-opacity': 0.88,
       },
     } as unknown as T;
@@ -198,8 +218,8 @@ function appliquerStyleRouteNavigation<T extends StyleSpecification['layers'][nu
       ...couche,
       paint: {
         ...couche.paint,
-        'line-color': '#B9C4CA',
-        'line-opacity': 0.48,
+        'line-color': '#A0A9AD',
+        'line-opacity': 0.54,
       },
     } as unknown as T;
   }
