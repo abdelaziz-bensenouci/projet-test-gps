@@ -33,3 +33,12 @@ export type HistoriqueAdresse = {
   source: 'autocomplete' | 'favori' | 'manuel';
   creeLe: string;
 };
+
+export type NotificationUtilisateur = {
+  id: string;
+  titre: string;
+  corps: string;
+  lue: boolean;
+  type: string;
+  creeLe: string;
+};

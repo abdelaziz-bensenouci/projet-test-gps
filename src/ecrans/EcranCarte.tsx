@@ -9,10 +9,10 @@ import { BoutonStopNavigation } from '../composants/BoutonStopNavigation';
 import { BoutonsFlottantsNavigation } from '../composants/BoutonsFlottantsNavigation';
 import {
   PanneauPartage,
-  PanneauProfil,
   PanneauSignalement,
   PanneauUrgence,
 } from '../composants/PanneauxApplicatifs';
+import { PanneauProfilWalkZen } from '../composants/PanneauProfilWalkZen';
 import { PanneauTrajet } from '../composants/PanneauTrajet';
 import { useProfilApplication } from '../hooks/useProfilApplication';
 import { usePositionUtilisateur } from '../hooks/usePositionUtilisateur';
@@ -227,10 +227,14 @@ export function EcranCarte() {
               />
             ) : null}
             {panneauApplicatif === 'profil' ? (
-              <PanneauProfil
+              <PanneauProfilWalkZen
+                chargement={profilApplication.chargement}
                 contacts={profilApplication.contacts}
+                erreur={profilApplication.erreur}
                 favoris={profilApplication.favoris}
                 fermer={fermerPanneauApplicatif}
+                historique={profilApplication.historique}
+                notifications={profilApplication.notifications}
                 profil={profilApplication.profil}
               />
             ) : null}

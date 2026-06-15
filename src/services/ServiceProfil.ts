@@ -5,6 +5,7 @@ import type {
   ContactConfiance,
   HistoriqueAdresse,
   LieuFavori,
+  NotificationUtilisateur,
   ProfilUtilisateur,
 } from '../types/ProfilUtilisateur';
 
@@ -65,7 +66,7 @@ export async function recupererOuCreerProfil(
 
 export async function recupererDonneesUtilisateur() {
   const client = obtenirClientSupabase();
-  const [contacts, favoris, historique] = await Promise.all([
+  const [contacts, favoris, historique, notifications] = await Promise.all([
     client
       .from('trusted_contacts')
       .select('id,name,email,phone,walkzen_id,contact_user_id')
@@ -79,16 +80,24 @@ export async function recupererDonneesUtilisateur() {
       .select('id,label,latitude,longitude,usage_type,source,created_at')
       .order('created_at', { ascending: false })
       .limit(20),
+    client
+      .from('user_notifications')
+      .select('id,title,body,read,type,created_at')
+      .is('dismissed_at', null)
+      .order('created_at', { ascending: false })
+      .limit(20),
   ]);
 
   if (contacts.error) throw contacts.error;
   if (favoris.error) throw favoris.error;
   if (historique.error) throw historique.error;
+  if (notifications.error) throw notifications.error;
 
   return {
     contacts: (contacts.data ?? []).map(mapperContact),
     favoris: (favoris.data ?? []).map(mapperFavori),
     historique: (historique.data ?? []).map(mapperHistorique),
+    notifications: (notifications.data ?? []).map(mapperNotification),
   };
 }
 
@@ -164,6 +173,17 @@ function mapperHistorique(ligne: Record<string, unknown>): HistoriqueAdresse {
         : ligne.source === 'manual'
           ? 'manuel'
           : 'autocomplete',
+    creeLe: String(ligne.created_at ?? ''),
+  };
+}
+
+function mapperNotification(ligne: Record<string, unknown>): NotificationUtilisateur {
+  return {
+    id: String(ligne.id),
+    titre: String(ligne.title ?? ''),
+    corps: String(ligne.body ?? ''),
+    lue: Boolean(ligne.read),
+    type: String(ligne.type ?? 'general'),
     creeLe: String(ligne.created_at ?? ''),
   };
 }

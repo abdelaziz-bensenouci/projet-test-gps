@@ -9,6 +9,7 @@ import type {
   ContactConfiance,
   HistoriqueAdresse,
   LieuFavori,
+  NotificationUtilisateur,
   ProfilUtilisateur,
 } from '../types/ProfilUtilisateur';
 
@@ -17,6 +18,7 @@ export function useProfilApplication() {
   const [contacts, setContacts] = useState<ContactConfiance[]>([]);
   const [favoris, setFavoris] = useState<LieuFavori[]>([]);
   const [historique, setHistorique] = useState<HistoriqueAdresse[]>([]);
+  const [notifications, setNotifications] = useState<NotificationUtilisateur[]>([]);
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState<string | null>(null);
 
@@ -33,6 +35,7 @@ export function useProfilApplication() {
         setContacts([]);
         setFavoris([]);
         setHistorique([]);
+        setNotifications([]);
         return;
       }
 
@@ -40,11 +43,13 @@ export function useProfilApplication() {
       setContacts(donnees.contacts);
       setFavoris(donnees.favoris);
       setHistorique(donnees.historique);
+      setNotifications(donnees.notifications);
     } catch {
       setErreur('Profil indisponible pour le moment.');
       setContacts([]);
       setFavoris([]);
       setHistorique([]);
+      setNotifications([]);
     } finally {
       setChargement(false);
     }
@@ -60,6 +65,7 @@ export function useProfilApplication() {
     erreur,
     favoris,
     historique,
+    notifications,
     profil,
     rafraichir,
   };
