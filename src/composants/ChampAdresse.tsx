@@ -97,8 +97,9 @@ const styles = StyleSheet.create({
   champ: {
     color: '#1F2D38',
     flex: 1,
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '900',
+    lineHeight: 20,
     minHeight: 28,
     padding: 0,
   },
