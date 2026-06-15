@@ -53,6 +53,14 @@ export function analyserNavigationGps({
     return null;
   }
 
+  const projectionComplete =
+    indexSegmentMinimum > 0 ? projeterSurTrace(gps.position, trace, 0) : projection;
+  const projectionFiable =
+    projectionComplete &&
+    projectionComplete.distanceMetres + 5 < projection.distanceMetres
+      ? projectionComplete
+      : projection;
+
   const precisionFiable =
     gps.precisionMetres === null || gps.precisionMetres <= PRECISION_MAX_METRES;
   const directionUtilisateur = obtenirDirectionUtilisateur(gps, positionPrecedente);
@@ -62,26 +70,27 @@ export function analyserNavigationGps({
   const ecartDirection =
     directionUtilisateur === null
       ? null
-      : calculerEcartAngulaire(directionUtilisateur, projection.bearingSegment);
+      : calculerEcartAngulaire(directionUtilisateur, projectionFiable.bearingSegment);
   const mauvaisSens =
     precisionFiable &&
     deplacementSuffisant &&
-    projection.distanceMetres <= SEUIL_SNAP_METRES &&
+    projectionFiable.distanceMetres <= SEUIL_SNAP_METRES &&
     ecartDirection !== null &&
     ecartDirection >= SEUIL_MAUVAIS_SENS_DEGRES;
   const snapActif =
     precisionFiable &&
-    projection.distanceMetres <= SEUIL_SNAP_METRES &&
+    projectionFiable.distanceMetres <= SEUIL_SNAP_METRES &&
     !mauvaisSens;
 
   return {
-    bearingNavigation: projection.bearingSegment,
-    distanceTraceMetres: projection.distanceMetres,
-    horsTrace: precisionFiable && projection.distanceMetres >= SEUIL_HORS_TRACE_METRES,
-    indexSegment: projection.indexSegment,
+    bearingNavigation: projectionFiable.bearingSegment,
+    distanceTraceMetres: projectionFiable.distanceMetres,
+    horsTrace:
+      precisionFiable && projectionFiable.distanceMetres >= SEUIL_HORS_TRACE_METRES,
+    indexSegment: projectionFiable.indexSegment,
     mauvaisSens,
-    pointProjete: projection.point,
-    positionAffichee: snapActif ? projection.point : gps.position,
+    pointProjete: projectionFiable.point,
+    positionAffichee: snapActif ? projectionFiable.point : gps.position,
     snapActif,
   };
 }

@@ -53,6 +53,10 @@ export function Carte({
     [modeCarte, navigationActive],
   );
   const analyseNavigation = useMemo(() => {
+    if (!navigationActive) {
+      return null;
+    }
+
     const positionPrecedente = positionPrecedenteRef.current;
 
     return analyserNavigationGps({
@@ -67,9 +71,17 @@ export function Carte({
       positionPrecedente,
       trace: traceAffiche,
     });
-  }, [directionUtilisateur, positionUtilisateur, precisionUtilisateur, traceAffiche]);
+  }, [
+    directionUtilisateur,
+    navigationActive,
+    positionUtilisateur,
+    precisionUtilisateur,
+    traceAffiche,
+  ]);
   const positionUtilisateurAffichee =
-    analyseNavigation?.positionAffichee ?? positionUtilisateur;
+    navigationActive && analyseNavigation?.positionAffichee
+      ? analyseNavigation.positionAffichee
+      : positionUtilisateur;
   const bearingNavigation = analyseNavigation?.bearingNavigation;
   const traceAfficheeRestante = useMemo(
     () => calculerTraceRestante(traceAffiche, analyseNavigation),
@@ -84,6 +96,7 @@ export function Carte({
     let actif = true;
     const pointsOsrm = itineraire?.coordonnees ?? [];
     dernierIndexSegmentRef.current = 0;
+    positionPrecedenteRef.current = null;
     setTraceAffiche([]);
     onTraceItinerairePrete(false);
 
@@ -121,6 +134,12 @@ export function Carte({
   }, [itineraire, onTraceItinerairePrete]);
 
   useEffect(() => {
+    if (!navigationActive) {
+      dernierIndexSegmentRef.current = 0;
+      positionPrecedenteRef.current = positionUtilisateur;
+      return;
+    }
+
     positionPrecedenteRef.current = positionUtilisateur;
 
     if (analyseNavigation?.snapActif) {
@@ -129,7 +148,7 @@ export function Carte({
         analyseNavigation.indexSegment,
       );
     }
-  }, [analyseNavigation, positionUtilisateur]);
+  }, [analyseNavigation, navigationActive, positionUtilisateur]);
 
   useEffect(() => {
     const points = itineraire?.coordonnees ?? [];
