@@ -30,6 +30,41 @@ export async function recupererUtilisateurCourant() {
   return data.user;
 }
 
+export async function connecterUtilisateur(email: string, motDePasse: string) {
+  const client = obtenirClientSupabase();
+  const { data, error } = await client.auth.signInWithPassword({
+    email: email.trim(),
+    password: motDePasse,
+  });
+
+  if (error) throw error;
+  return data.user;
+}
+
+export async function inscrireUtilisateur(
+  nomComplet: string,
+  email: string,
+  motDePasse: string,
+) {
+  const client = obtenirClientSupabase();
+  const { data, error } = await client.auth.signUp({
+    email: email.trim(),
+    password: motDePasse,
+    options: { data: { full_name: nomComplet.trim() } },
+  });
+
+  if (error) throw error;
+  await recupererOuCreerProfil(data.user);
+  return data.user;
+}
+
+export async function deconnecterUtilisateur() {
+  const client = obtenirClientSupabase();
+  const { error } = await client.auth.signOut();
+
+  if (error) throw error;
+}
+
 export async function recupererOuCreerProfil(
   utilisateur: User | null,
 ): Promise<ProfilUtilisateur | null> {
@@ -99,6 +134,114 @@ export async function recupererDonneesUtilisateur() {
     historique: (historique.data ?? []).map(mapperHistorique),
     notifications: (notifications.data ?? []).map(mapperNotification),
   };
+}
+
+export async function rechercherProfilParIdentifiantWalkZen(identifiant: string) {
+  const client = obtenirClientSupabase();
+  const { data, error } = await client.rpc('lookup_profile_by_walkzen_id', {
+    search_walkzen_id: identifiant.trim().toUpperCase(),
+  });
+
+  if (error) throw error;
+  const ligne = Array.isArray(data) ? data[0] : null;
+
+  if (!ligne) {
+    return null;
+  }
+
+  return {
+    id: String(ligne.id),
+    nomComplet: String(ligne.full_name ?? ''),
+    email: '',
+    identifiantWalkZen: String(ligne.walkzen_id ?? ''),
+  };
+}
+
+export async function ajouterContactConfiance({
+  identifiantWalkZen,
+  nom,
+  utilisateurContactId,
+}: {
+  identifiantWalkZen: string;
+  nom: string;
+  utilisateurContactId: string;
+}) {
+  const client = obtenirClientSupabase();
+  const { error } = await client.from('trusted_contacts').insert({
+    name: nom.trim(),
+    email: '',
+    phone: '',
+    walkzen_id: identifiantWalkZen.trim().toUpperCase(),
+    contact_user_id: utilisateurContactId || null,
+  });
+
+  if (error) throw error;
+}
+
+export async function supprimerContactConfiance(id: string) {
+  const client = obtenirClientSupabase();
+  const { error } = await client.from('trusted_contacts').delete().eq('id', id);
+
+  if (error) throw error;
+}
+
+export async function ajouterLieuFavori({
+  adresse,
+  libelle,
+  type,
+  latitude,
+  longitude,
+}: {
+  adresse: string;
+  libelle: string;
+  type: 'depart' | 'destination';
+  latitude?: number | null;
+  longitude?: number | null;
+}) {
+  const client = obtenirClientSupabase();
+  const { error } = await client.from('favorite_places').insert({
+    label: libelle.trim(),
+    address: adresse.trim(),
+    kind: type === 'depart' ? 'departure' : 'destination',
+    latitude: latitude ?? null,
+    longitude: longitude ?? null,
+  });
+
+  if (error) throw error;
+}
+
+export async function supprimerLieuFavori(id: string) {
+  const client = obtenirClientSupabase();
+  const { error } = await client.from('favorite_places').delete().eq('id', id);
+
+  if (error) throw error;
+}
+
+export async function supprimerHistoriqueAdresse(id: string) {
+  const client = obtenirClientSupabase();
+  const { error } = await client.from('address_search_history').delete().eq('id', id);
+
+  if (error) throw error;
+}
+
+export async function marquerNotificationLue(id: string) {
+  const client = obtenirClientSupabase();
+  const { error } = await client
+    .from('user_notifications')
+    .update({ read: true, read_at: new Date().toISOString() })
+    .eq('id', id);
+
+  if (error) throw error;
+}
+
+export async function masquerNotification(id: string) {
+  const client = obtenirClientSupabase();
+  const { error } = await client
+    .from('user_notifications')
+    .update({ dismissed_at: new Date().toISOString() })
+    .eq('id', id);
+
+  if (error) throw error;
 }
 
 async function recupererProfil(id: string) {

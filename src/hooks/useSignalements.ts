@@ -4,6 +4,7 @@ import {
   chargerSignalements,
   creerSignalement,
   ecouterSignalements,
+  validerSignalement,
 } from '../services/ServiceSignalements';
 import type { Coordonnees } from '../types/Coordonnees';
 import type {
@@ -74,7 +75,11 @@ export function useSignalements(positionUtilisateur: Coordonnees | null) {
   );
 
   const ajouterSignalement = useCallback(
-    async (niveauDanger: NiveauDangerSignalement, libelle: string) => {
+    async (
+      niveauDanger: NiveauDangerSignalement,
+      libelle: string,
+      details?: string,
+    ) => {
       if (!positionUtilisateur) {
         setMessage('Position GPS indisponible pour créer le signalement.');
         return;
@@ -86,6 +91,7 @@ export function useSignalements(positionUtilisateur: Coordonnees | null) {
       try {
         const nouveau = await creerSignalement({
           coordonnees: positionUtilisateur,
+          details,
           libelle,
           niveauDanger,
         });
@@ -102,12 +108,31 @@ export function useSignalements(positionUtilisateur: Coordonnees | null) {
     },
     [positionUtilisateur],
   );
+  const confirmerSignalement = useCallback(
+    async (signalement: Signalement) => {
+      try {
+        await validerSignalement(signalement.id, signalement.validations);
+        setSignalements((items) =>
+          items.map((item) =>
+            item.id === signalement.id
+              ? { ...item, validations: item.validations + 1 }
+              : item,
+          ),
+        );
+        setMessage('Signalement validé.');
+      } catch {
+        setMessage('Validation impossible.');
+      }
+    },
+    [],
+  );
 
   return {
     ajouterSignalement,
     chargement,
     compteurs,
     creationEnCours,
+    confirmerSignalement,
     message,
     signalements: signalementsAutour,
   };

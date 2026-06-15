@@ -7,17 +7,17 @@ import { BanniereNavigation } from '../composants/BanniereNavigation';
 import { BanniereSignalements } from '../composants/BanniereSignalements';
 import { BoutonStopNavigation } from '../composants/BoutonStopNavigation';
 import { BoutonsFlottantsNavigation } from '../composants/BoutonsFlottantsNavigation';
-import {
-  PanneauPartage,
-  PanneauSignalement,
-  PanneauUrgence,
-} from '../composants/PanneauxApplicatifs';
+import { PanneauPartageWalkZen } from '../composants/PanneauPartageWalkZen';
 import { PanneauProfilWalkZen } from '../composants/PanneauProfilWalkZen';
+import { PanneauSignalementWalkZen } from '../composants/PanneauSignalementWalkZen';
 import { PanneauTrajet } from '../composants/PanneauTrajet';
+import { PanneauUrgenceWalkZen } from '../composants/PanneauUrgenceWalkZen';
+import { usePartageLive } from '../hooks/usePartageLive';
 import { useProfilApplication } from '../hooks/useProfilApplication';
 import { usePositionUtilisateur } from '../hooks/usePositionUtilisateur';
 import { useRechercheItineraire } from '../hooks/useRechercheItineraire';
 import { useSignalements } from '../hooks/useSignalements';
+import { useSosApplication } from '../hooks/useSosApplication';
 import { analyserNavigationGps } from '../navigationGps/navigationGpsAvancee';
 import type { Coordonnees } from '../types/Coordonnees';
 import type { ModeCarte } from '../types/ModeCarte';
@@ -48,6 +48,18 @@ export function EcranCarte() {
   const recherche = useRechercheItineraire();
   const profilApplication = useProfilApplication();
   const signalements = useSignalements(positionUtilisateur);
+  const sos = useSosApplication({
+    contacts: profilApplication.contacts,
+    positionUtilisateur,
+    precisionUtilisateur,
+    profil: profilApplication.profil,
+  });
+  const partageLive = usePartageLive({
+    contacts: profilApplication.contacts,
+    destination: recherche.destinationTexte,
+    positionUtilisateur,
+    profil: profilApplication.profil,
+  });
   const itinerairePrecedentRef = useRef(recherche.itineraire);
   const itinerairePretAffichage = Boolean(
     recherche.itineraire && traceItinerairePrete,
@@ -69,6 +81,10 @@ export function EcranCarte() {
   const ouvrirPanneauApplicatif = (panneau: Exclude<PanneauApplicatif, null>) => {
     setPanneauTrajetOuvert(false);
     setPanneauApplicatif(panneau);
+  };
+  const activerSos = () => {
+    ouvrirPanneauApplicatif('urgence');
+    sos.demanderSos();
   };
   const fermerPanneauApplicatif = () => {
     setPanneauApplicatif(null);
@@ -222,33 +238,64 @@ export function EcranCarte() {
         {panneauApplicatif ? (
           <View style={styles.panneauApplicatif}>
             {panneauApplicatif === 'signalement' ? (
-              <PanneauSignalement
+              <PanneauSignalementWalkZen
                 creationEnCours={signalements.creationEnCours}
                 fermer={fermerPanneauApplicatif}
                 message={signalements.message}
+                confirmerSignalement={signalements.confirmerSignalement}
+                signalements={signalements.signalements}
                 signaler={signalements.ajouterSignalement}
               />
             ) : null}
             {panneauApplicatif === 'profil' ? (
               <PanneauProfilWalkZen
+                actionEnCours={profilApplication.actionEnCours}
+                ajouterContact={profilApplication.ajouterContact}
+                ajouterFavori={profilApplication.ajouterFavori}
                 chargement={profilApplication.chargement}
+                connecter={profilApplication.connecter}
                 contacts={profilApplication.contacts}
+                deconnecter={profilApplication.deconnecter}
                 erreur={profilApplication.erreur}
                 favoris={profilApplication.favoris}
                 fermer={fermerPanneauApplicatif}
                 historique={profilApplication.historique}
+                inscrire={profilApplication.inscrire}
+                marquerNotificationLue={profilApplication.marquerNotificationLue}
+                masquerNotification={profilApplication.masquerNotification}
+                messageAction={profilApplication.messageAction}
                 notifications={profilApplication.notifications}
                 profil={profilApplication.profil}
+                supprimerContact={profilApplication.supprimerContact}
+                supprimerFavori={profilApplication.supprimerFavori}
+                supprimerHistorique={profilApplication.supprimerHistorique}
               />
             ) : null}
             {panneauApplicatif === 'partage' ? (
-              <PanneauPartage
+              <PanneauPartageWalkZen
+                arreterPartage={partageLive.arreterPartage}
+                chargement={partageLive.chargement}
+                contactSelectionneId={partageLive.contactSelectionneId}
                 contacts={profilApplication.contacts}
+                demarrerPartage={partageLive.demarrerPartage}
                 fermer={fermerPanneauApplicatif}
+                message={partageLive.message}
+                partageActif={partageLive.partageActif}
+                selectionnerContact={partageLive.selectionnerContact}
               />
             ) : null}
             {panneauApplicatif === 'urgence' ? (
-              <PanneauUrgence fermer={fermerPanneauApplicatif} />
+              <PanneauUrgenceWalkZen
+                alerteActive={sos.alerteActive}
+                annulerSos={sos.annulerSos}
+                chargement={sos.chargement}
+                confirmationVisible={sos.confirmationVisible}
+                demanderSos={sos.demanderSos}
+                envoyerSos={sos.envoyerSos}
+                fermer={fermerPanneauApplicatif}
+                fermerConfirmation={sos.fermerConfirmation}
+                message={sos.message}
+              />
             ) : null}
           </View>
         ) : null}
@@ -271,7 +318,7 @@ export function EcranCarte() {
         {!navigationPleinEcran ? (
           <View style={styles.barreOnglets}>
             <BarreOnglets
-              activerSos={() => ouvrirPanneauApplicatif('urgence')}
+              activerSos={activerSos}
               ouvrirPanneauPartage={() => ouvrirPanneauApplicatif('partage')}
               ouvrirPanneauSignalement={() =>
                 ouvrirPanneauApplicatif('signalement')

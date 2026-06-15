@@ -59,7 +59,7 @@ export async function creerSignalement(
       type: 'user',
       label: signalement.libelle,
       details: signalement.details ?? 'Signalement communautaire',
-      severity: signalement.niveauDanger,
+      severity: mapperNiveauDangerBase(signalement.niveauDanger),
       latitude: signalement.coordonnees.latitude,
       longitude: signalement.coordonnees.longitude,
       validations: 1,
@@ -75,6 +75,19 @@ export async function creerSignalement(
   }
 
   return mapperSignalement(data as LigneSignalement);
+}
+
+export async function validerSignalement(id: string, validations: number) {
+  const client = obtenirClientSupabase();
+  const { error } = await client
+    .from('reports')
+    .update({
+      validations: validations + 1,
+      expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+    })
+    .eq('id', id);
+
+  if (error) throw error;
 }
 
 export function ecouterSignalements(
@@ -121,4 +134,10 @@ function mapperNiveauDanger(valeur: string): NiveauDangerSignalement {
   if (valeur === 'high' || valeur === 'eleve') return 'eleve';
   if (valeur === 'medium' || valeur === 'modere') return 'modere';
   return 'faible';
+}
+
+function mapperNiveauDangerBase(valeur: NiveauDangerSignalement) {
+  if (valeur === 'eleve') return 'high';
+  if (valeur === 'modere') return 'medium';
+  return 'low';
 }
