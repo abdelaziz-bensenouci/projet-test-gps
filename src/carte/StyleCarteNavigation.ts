@@ -123,14 +123,7 @@ function creerCouchesNavigationMinimalistes(
       }
 
       if (masquerCouchePietonne(id)) {
-        return {
-          ...coucheSansPietons,
-          paint: {
-            ...coucheSansPietons.paint,
-            'line-opacity': 0,
-            'text-opacity': 0,
-          },
-        } as unknown as typeof coucheSansPietons;
+        return masquerCoucheSelonType(coucheSansPietons);
       }
 
       if (coucheSansPietons.type === 'line' && sourceLayer.includes('transportation')) {
@@ -171,6 +164,53 @@ function masquerClassesPietonnes<T extends StyleSpecification['layers'][number]>
     ...couche,
     filter: filtre ? [...exclusion, filtre] : exclusion,
   } as T;
+}
+
+function masquerCoucheSelonType<T extends StyleSpecification['layers'][number]>(
+  couche: T,
+): T {
+  if (couche.type === 'line') {
+    return {
+      ...couche,
+      paint: {
+        ...couche.paint,
+        'line-opacity': 0,
+      },
+    } as unknown as T;
+  }
+
+  if (couche.type === 'symbol') {
+    return {
+      ...couche,
+      paint: {
+        ...couche.paint,
+        'text-opacity': 0,
+        'icon-opacity': 0,
+      },
+    } as unknown as T;
+  }
+
+  if (couche.type === 'fill') {
+    return {
+      ...couche,
+      paint: {
+        ...couche.paint,
+        'fill-opacity': 0,
+      },
+    } as unknown as T;
+  }
+
+  if (couche.type === 'circle') {
+    return {
+      ...couche,
+      paint: {
+        ...couche.paint,
+        'circle-opacity': 0,
+      },
+    } as unknown as T;
+  }
+
+  return couche;
 }
 
 function appliquerStyleRouteNavigation<T extends StyleSpecification['layers'][number]>(
