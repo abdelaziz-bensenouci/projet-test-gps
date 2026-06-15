@@ -16,7 +16,10 @@ import {
 } from '../constantes/CarteConstantes';
 import { calculerBearing, versLngLat } from '../utilitaires/coordonnees';
 import { creerGeoJsonItineraire } from '../utilitaires/geojson';
-import { analyserNavigationGps } from '../navigationGps/navigationGpsAvancee';
+import {
+  analyserNavigationGps,
+  calculerTraceRestante,
+} from '../navigationGps/navigationGpsAvancee';
 import { adapterTraceSurAxesRoutiers } from './centrageTrace/adapterTraceSurAxesRoutiers';
 import { MarqueurCarte } from './MarqueurCarte';
 import { MarqueurUtilisateur } from './MarqueurUtilisateur';
@@ -45,10 +48,6 @@ export function Carte({
     () => obtenirStyleCarte(modeCarte, navigationActive),
     [modeCarte, navigationActive],
   );
-  const geoJsonItineraire = useMemo(
-    () => creerGeoJsonItineraire(itineraire, traceAffiche),
-    [itineraire, traceAffiche],
-  );
   const analyseNavigation = useMemo(() => {
     const positionPrecedente = positionPrecedenteRef.current;
 
@@ -69,6 +68,14 @@ export function Carte({
   const positionUtilisateurAffichee =
     analyseNavigation?.positionAffichee ?? positionUtilisateur;
   const bearingNavigation = analyseNavigation?.bearingNavigation;
+  const traceAfficheeRestante = useMemo(
+    () => calculerTraceRestante(traceAffiche, analyseNavigation),
+    [analyseNavigation, traceAffiche],
+  );
+  const geoJsonItineraire = useMemo(
+    () => creerGeoJsonItineraire(itineraire, traceAfficheeRestante),
+    [itineraire, traceAfficheeRestante],
+  );
 
   useEffect(() => {
     let actif = true;

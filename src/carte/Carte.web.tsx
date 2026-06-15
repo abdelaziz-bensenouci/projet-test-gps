@@ -16,7 +16,10 @@ import {
   ZOOM_NAVIGATION_REDUIT,
 } from '../constantes/CarteConstantes';
 import { calculerBearing, versLngLat } from '../utilitaires/coordonnees';
-import { analyserNavigationGps } from '../navigationGps/navigationGpsAvancee';
+import {
+  analyserNavigationGps,
+  calculerTraceRestante,
+} from '../navigationGps/navigationGpsAvancee';
 import { adapterTraceSurAxesRoutiers } from './centrageTrace/adapterTraceSurAxesRoutiers';
 import type { ProprietesCarte } from './typesCarte';
 import type { Coordonnees } from '../types/Coordonnees';
@@ -66,6 +69,10 @@ export function Carte({
   const positionUtilisateurAffichee =
     analyseNavigation?.positionAffichee ?? positionUtilisateur;
   const bearingNavigation = analyseNavigation?.bearingNavigation;
+  const traceAfficheeRestante = useMemo(
+    () => calculerTraceRestante(traceAffiche, analyseNavigation),
+    [analyseNavigation, traceAffiche],
+  );
 
   useEffect(() => {
     if (!conteneurRef.current || carteRef.current) {
@@ -167,14 +174,14 @@ export function Carte({
 
       const donnees: GeoJSON.FeatureCollection<GeoJSON.LineString> = {
         type: 'FeatureCollection',
-        features: traceAffiche.length >= 2
+        features: traceAfficheeRestante.length >= 2
           ? [
               {
                 type: 'Feature',
                 properties: {},
                 geometry: {
                   type: 'LineString',
-                  coordinates: traceAffiche.map(versLngLat),
+                  coordinates: traceAfficheeRestante.map(versLngLat),
                 },
               },
             ]
@@ -205,7 +212,7 @@ export function Carte({
       carte.off('styledata', appliquerTrace);
       carte.off('idle', appliquerTrace);
     };
-  }, [traceAffiche, styleCarte]);
+  }, [traceAfficheeRestante, styleCarte]);
 
   useEffect(() => {
     const carte = carteRef.current;

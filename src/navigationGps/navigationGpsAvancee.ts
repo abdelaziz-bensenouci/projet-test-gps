@@ -15,16 +15,19 @@ export type DonneesGpsNavigation = {
 };
 
 export type EtatNavigationGps = {
+  indexSegment: number;
   distanceTraceMetres: number | null;
   horsTrace: boolean;
   mauvaisSens: boolean;
   positionAffichee: Coordonnees;
+  pointProjete: Coordonnees;
   snapActif: boolean;
   bearingNavigation: number | null;
 };
 
 type ProjectionTrace = {
   distanceMetres: number;
+  indexSegment: number;
   point: Coordonnees;
   bearingSegment: number;
 };
@@ -70,15 +73,29 @@ export function analyserNavigationGps({
     !mauvaisSens;
 
   return {
-    bearingNavigation: snapActif
-      ? projection.bearingSegment
-      : directionUtilisateur ?? projection.bearingSegment,
+    bearingNavigation: projection.bearingSegment,
     distanceTraceMetres: projection.distanceMetres,
     horsTrace: precisionFiable && projection.distanceMetres >= SEUIL_HORS_TRACE_METRES,
+    indexSegment: projection.indexSegment,
     mauvaisSens,
+    pointProjete: projection.point,
     positionAffichee: snapActif ? projection.point : gps.position,
     snapActif,
   };
+}
+
+export function calculerTraceRestante(
+  trace: Coordonnees[],
+  analyse: EtatNavigationGps | null,
+): Coordonnees[] {
+  if (!analyse?.snapActif || trace.length < 2) {
+    return trace;
+  }
+
+  const pointsRestants = trace.slice(analyse.indexSegment + 1);
+  const traceRestante = [analyse.pointProjete, ...pointsRestants];
+
+  return traceRestante.length >= 2 ? traceRestante : trace.slice(-2);
 }
 
 export function calculerDistanceMetres(a: Coordonnees, b: Coordonnees) {
@@ -104,7 +121,7 @@ function projeterSurTrace(
   for (let index = 0; index < trace.length - 1; index += 1) {
     const depart = trace[index];
     const arrivee = trace[index + 1];
-    const projection = projeterSurSegment(position, depart, arrivee);
+    const projection = projeterSurSegment(position, depart, arrivee, index);
 
     if (
       !meilleureProjection ||
@@ -121,6 +138,7 @@ function projeterSurSegment(
   position: Coordonnees,
   depart: Coordonnees,
   arrivee: Coordonnees,
+  indexSegment: number,
 ): ProjectionTrace {
   const origine = convertirEnPlanMetres(position, position);
   const a = convertirEnPlanMetres(depart, position);
@@ -141,6 +159,7 @@ function projeterSurSegment(
   return {
     bearingSegment: calculerBearing(depart, arrivee),
     distanceMetres: calculerDistanceMetres(position, point),
+    indexSegment,
     point,
   };
 }
@@ -205,4 +224,3 @@ function convertirDegresEnRadians(valeur: number) {
 function convertirRadiansEnDegres(valeur: number) {
   return (valeur * 180) / Math.PI;
 }
-

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { SafeAreaView, StyleSheet, View } from 'react-native';
+import { SafeAreaView, StyleSheet, Text, View } from 'react-native';
 
 import { Carte } from '../carte/Carte';
 import { BarreOnglets } from '../composants/BarreOnglets';
@@ -23,6 +23,8 @@ export function EcranCarte() {
   const [navigationPleinEcran, setNavigationPleinEcran] = useState(false);
   const [pleinEcranModifieParUtilisateur, setPleinEcranModifieParUtilisateur] =
     useState(false);
+  const [recalculNavigationEnCours, setRecalculNavigationEnCours] =
+    useState(false);
   const [suiviCameraActif, setSuiviCameraActif] = useState(true);
   const positionPrecedenteRef = useRef<Coordonnees | null>(null);
   const dernierRecalculNavigationRef = useRef(0);
@@ -32,6 +34,7 @@ export function EcranCarte() {
     precisionUtilisateur,
   } = usePositionUtilisateur();
   const recherche = useRechercheItineraire();
+  const itinerairePrecedentRef = useRef(recherche.itineraire);
   const trajetActif = Boolean(recherche.itineraire);
   const ouvrirPanneauTrajet = () => {
     setPanneauTrajetOuvert(true);
@@ -40,6 +43,7 @@ export function EcranCarte() {
     setPanneauTrajetOuvert(false);
   };
   const rechercherDepuisPanneauTrajet = () => {
+    setSuiviCameraActif(true);
     setPleinEcranModifieParUtilisateur(false);
     void recherche.rechercherItineraireDepuisPosition(positionUtilisateur);
   };
@@ -59,13 +63,19 @@ export function EcranCarte() {
     setNavigationPleinEcran(false);
     setPleinEcranModifieParUtilisateur(false);
     setPanneauTrajetOuvert(false);
+    setRecalculNavigationEnCours(false);
     setSuiviCameraActif(true);
   };
 
   useEffect(() => {
+    const itinerairePrecedent = itinerairePrecedentRef.current;
+    itinerairePrecedentRef.current = recherche.itineraire;
+
     if (recherche.itineraire) {
       setPanneauTrajetOuvert(false);
-      setSuiviCameraActif(true);
+      if (!itinerairePrecedent) {
+        setSuiviCameraActif(true);
+      }
       if (!pleinEcranModifieParUtilisateur) {
         setNavigationPleinEcran(true);
       }
@@ -104,7 +114,7 @@ export function EcranCarte() {
     }
 
     dernierRecalculNavigationRef.current = maintenant;
-    setPleinEcranModifieParUtilisateur(false);
+    setRecalculNavigationEnCours(true);
     void recherche.rechercherItineraireDepuisPosition(positionUtilisateur);
   }, [
     directionUtilisateur,
@@ -113,6 +123,12 @@ export function EcranCarte() {
     recherche,
     recherche.itineraire,
   ]);
+
+  useEffect(() => {
+    if (recalculNavigationEnCours && recherche.etatRecherche !== 'chargement') {
+      setRecalculNavigationEnCours(false);
+    }
+  }, [recalculNavigationEnCours, recherche.etatRecherche]);
 
   return (
     <SafeAreaView style={styles.page}>
@@ -170,6 +186,13 @@ export function EcranCarte() {
             trajetActif={trajetActif}
           />
         </View>
+        {recalculNavigationEnCours ? (
+          <View style={styles.messageRecalcul}>
+            <Text style={styles.texteMessageRecalcul}>
+              Recalcul d'itinéraire en cours
+            </Text>
+          </View>
+        ) : null}
         {!navigationPleinEcran ? (
           <View style={styles.barreOnglets}>
             <BarreOnglets ouvrirPanneauTrajet={ouvrirPanneauTrajet} />
@@ -223,6 +246,29 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 8,
     zIndex: 24,
+  },
+  messageRecalcul: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(5,10,20,0.78)',
+    borderColor: 'rgba(143,234,255,0.26)',
+    borderRadius: 999,
+    borderWidth: 1,
+    elevation: 1200,
+    left: 28,
+    minHeight: 36,
+    paddingHorizontal: 14,
+    position: 'absolute',
+    right: 28,
+    top: 140,
+    zIndex: 1200,
+  },
+  texteMessageRecalcul: {
+    color: '#F3FCFF',
+    fontSize: 13,
+    fontWeight: '900',
+    lineHeight: 18,
+    paddingVertical: 8,
+    textAlign: 'center',
   },
   stopNavigation: {
     alignItems: 'center',
