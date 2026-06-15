@@ -80,6 +80,7 @@ export function Carte({
     }
 
     carteRef.current = new maplibregl.Map({
+      attributionControl: false,
       container: conteneurRef.current,
       style: styleCarte,
       center: versLngLat(positionUtilisateur ?? CENTRE_CARTE_INITIAL),

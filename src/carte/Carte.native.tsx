@@ -172,7 +172,7 @@ export function Carte({
 
   return (
     <Map
-      attribution
+      attribution={false}
       mapStyle={styleCarte}
       onTouchStart={onInteractionUtilisateurCarte}
       style={stylesCarte.carte}
