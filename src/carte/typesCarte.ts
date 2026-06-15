@@ -2,6 +2,7 @@ import type { AdresseGeocodee } from '../types/AdresseGeocodee';
 import type { Coordonnees } from '../types/Coordonnees';
 import type { Itineraire } from '../types/Itineraire';
 import type { ModeCarte } from '../types/ModeCarte';
+import type { Signalement } from '../types/Signalement';
 
 export type ProprietesCarte = {
   depart: AdresseGeocodee | null;
@@ -15,5 +16,6 @@ export type ProprietesCarte = {
   onInteractionUtilisateurCarte: () => void;
   positionUtilisateur: Coordonnees | null;
   precisionUtilisateur: number | null;
+  signalements: Signalement[];
   suiviCameraActif: boolean;
 };

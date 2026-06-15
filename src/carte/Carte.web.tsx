@@ -36,6 +36,7 @@ export function Carte({
   onTraceItinerairePrete,
   positionUtilisateur,
   precisionUtilisateur,
+  signalements,
   suiviCameraActif,
 }: ProprietesCarte) {
   const conteneurRef = useRef<HTMLDivElement | null>(null);
@@ -235,6 +236,12 @@ export function Carte({
 
     const tracePrete = Boolean(itineraire && traceAfficheeRestante.length >= 2);
 
+    signalements.forEach((signalement) => {
+      marqueursRef.current.push(
+        creerMarqueurSignalement(carte, signalement.coordonnees, signalement.libelle),
+      );
+    });
+
     if (tracePrete && depart && !estDepartPositionActuelle(depart.libelle)) {
       marqueursRef.current.push(
         creerMarqueur(carte, depart.coordonnees, '#2563eb'),
@@ -246,7 +253,7 @@ export function Carte({
         creerMarqueurArrivee(carte, destination.coordonnees, destination.libelle),
       );
     }
-  }, [depart, destination, itineraire, traceAfficheeRestante]);
+  }, [depart, destination, itineraire, signalements, traceAfficheeRestante]);
 
   useEffect(() => {
     const carte = carteRef.current;
@@ -443,6 +450,31 @@ function creerMarqueur(
   element.style.borderRadius = '8px';
   element.style.border = '2px solid #ffffff';
   element.style.backgroundColor = couleur;
+
+  return new maplibregl.Marker({ element })
+    .setLngLat(versLngLat(coordonnees))
+    .addTo(carte);
+}
+
+function creerMarqueurSignalement(
+  carte: maplibregl.Map,
+  coordonnees: { longitude: number; latitude: number },
+  libelle: string,
+) {
+  const element = document.createElement('div');
+  element.title = libelle;
+  element.textContent = '!';
+  element.style.width = '28px';
+  element.style.height = '28px';
+  element.style.borderRadius = '14px';
+  element.style.border = '3px solid #ffffff';
+  element.style.backgroundColor = '#EF4444';
+  element.style.color = '#ffffff';
+  element.style.fontWeight = '900';
+  element.style.fontSize = '15px';
+  element.style.lineHeight = '22px';
+  element.style.textAlign = 'center';
+  element.style.boxShadow = '0 5px 10px rgba(239,68,68,0.32)';
 
   return new maplibregl.Marker({ element })
     .setLngLat(versLngLat(coordonnees))

@@ -22,6 +22,7 @@ import {
 } from '../navigationGps/navigationGpsAvancee';
 import { adapterTraceSurAxesRoutiers } from './centrageTrace/adapterTraceSurAxesRoutiers';
 import { MarqueurCarte } from './MarqueurCarte';
+import { MarqueurSignalement } from './MarqueurSignalement';
 import { MarqueurUtilisateur } from './MarqueurUtilisateur';
 import { stylesCarte } from './stylesCarte';
 import type { ProprietesCarte } from './typesCarte';
@@ -39,6 +40,7 @@ export function Carte({
   onTraceItinerairePrete,
   positionUtilisateur,
   precisionUtilisateur,
+  signalements,
   suiviCameraActif,
 }: ProprietesCarte) {
   const cameraRef = useRef<CameraRef>(null);
@@ -238,6 +240,9 @@ export function Carte({
       {positionUtilisateurAffichee ? (
         <MarqueurUtilisateur coordonnees={positionUtilisateurAffichee} />
       ) : null}
+      {signalements.map((signalement) => (
+        <MarqueurSignalement key={signalement.id} signalement={signalement} />
+      ))}
       {itineraire && traceAfficheeRestante.length >= 2 &&
       depart && !estDepartPositionActuelle(depart.libelle) ? (
         <MarqueurCarte

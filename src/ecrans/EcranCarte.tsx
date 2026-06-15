@@ -7,14 +7,23 @@ import { BanniereNavigation } from '../composants/BanniereNavigation';
 import { BanniereSignalements } from '../composants/BanniereSignalements';
 import { BoutonStopNavigation } from '../composants/BoutonStopNavigation';
 import { BoutonsFlottantsNavigation } from '../composants/BoutonsFlottantsNavigation';
+import {
+  PanneauPartage,
+  PanneauProfil,
+  PanneauSignalement,
+  PanneauUrgence,
+} from '../composants/PanneauxApplicatifs';
 import { PanneauTrajet } from '../composants/PanneauTrajet';
+import { useProfilApplication } from '../hooks/useProfilApplication';
 import { usePositionUtilisateur } from '../hooks/usePositionUtilisateur';
 import { useRechercheItineraire } from '../hooks/useRechercheItineraire';
+import { useSignalements } from '../hooks/useSignalements';
 import { analyserNavigationGps } from '../navigationGps/navigationGpsAvancee';
 import type { Coordonnees } from '../types/Coordonnees';
 import type { ModeCarte } from '../types/ModeCarte';
 
 const COOLDOWN_RECALCUL_NAVIGATION_MS = 12000;
+type PanneauApplicatif = 'signalement' | 'profil' | 'partage' | 'urgence' | null;
 
 export function EcranCarte() {
   const modeCarte: ModeCarte = 'clair';
@@ -27,6 +36,8 @@ export function EcranCarte() {
     useState(false);
   const [suiviCameraActif, setSuiviCameraActif] = useState(true);
   const [traceItinerairePrete, setTraceItinerairePrete] = useState(false);
+  const [panneauApplicatif, setPanneauApplicatif] =
+    useState<PanneauApplicatif>(null);
   const positionPrecedenteRef = useRef<Coordonnees | null>(null);
   const dernierRecalculNavigationRef = useRef(0);
   const {
@@ -35,6 +46,8 @@ export function EcranCarte() {
     precisionUtilisateur,
   } = usePositionUtilisateur();
   const recherche = useRechercheItineraire();
+  const profilApplication = useProfilApplication();
+  const signalements = useSignalements(positionUtilisateur);
   const itinerairePrecedentRef = useRef(recherche.itineraire);
   const itinerairePretAffichage = Boolean(
     recherche.itineraire && traceItinerairePrete,
@@ -47,10 +60,18 @@ export function EcranCarte() {
     ? "Recalcul d'itinéraire en cours"
     : 'Calcul en cours de votre itinéraire';
   const ouvrirPanneauTrajet = () => {
+    setPanneauApplicatif(null);
     setPanneauTrajetOuvert(true);
   };
   const fermerPanneauTrajet = () => {
     setPanneauTrajetOuvert(false);
+  };
+  const ouvrirPanneauApplicatif = (panneau: Exclude<PanneauApplicatif, null>) => {
+    setPanneauTrajetOuvert(false);
+    setPanneauApplicatif(panneau);
+  };
+  const fermerPanneauApplicatif = () => {
+    setPanneauApplicatif(null);
   };
   const rechercherDepuisPanneauTrajet = () => {
     setTraceItinerairePrete(false);
@@ -75,6 +96,7 @@ export function EcranCarte() {
     setNavigationPleinEcran(false);
     setPleinEcranModifieParUtilisateur(false);
     setPanneauTrajetOuvert(false);
+    setPanneauApplicatif(null);
     setRecalculNavigationEnCours(false);
     setSuiviCameraActif(true);
   };
@@ -157,6 +179,7 @@ export function EcranCarte() {
           onTraceItinerairePrete={setTraceItinerairePrete}
           positionUtilisateur={positionUtilisateur}
           precisionUtilisateur={precisionUtilisateur}
+          signalements={signalements.signalements}
           suiviCameraActif={suiviCameraActif}
         />
         <View style={styles.banniereFlottante}>
@@ -164,7 +187,9 @@ export function EcranCarte() {
             <BanniereNavigation itineraire={recherche.itineraire} />
           ) : (
             <BanniereSignalements
+              compteurs={signalements.compteurs}
               destinationTexte={recherche.destinationTexte}
+              ouvrirProfil={() => ouvrirPanneauApplicatif('profil')}
               ouvrirPanneauTrajet={ouvrirPanneauTrajet}
               panneauTrajet={
                 panneauTrajetOuvert ? (
@@ -177,6 +202,7 @@ export function EcranCarte() {
                     fermer={fermerPanneauTrajet}
                     integre
                     messageRecherche={recherche.messageRecherche}
+                    lieuxFavoris={profilApplication.favoris}
                     positionDisponible={Boolean(positionUtilisateur)}
                     positionUtilisateur={positionUtilisateur}
                     rechercherItineraire={rechercherDepuisPanneauTrajet}
@@ -190,6 +216,35 @@ export function EcranCarte() {
             />
           )}
         </View>
+        {panneauApplicatif ? (
+          <View style={styles.panneauApplicatif}>
+            {panneauApplicatif === 'signalement' ? (
+              <PanneauSignalement
+                creationEnCours={signalements.creationEnCours}
+                fermer={fermerPanneauApplicatif}
+                message={signalements.message}
+                signaler={signalements.ajouterSignalement}
+              />
+            ) : null}
+            {panneauApplicatif === 'profil' ? (
+              <PanneauProfil
+                contacts={profilApplication.contacts}
+                favoris={profilApplication.favoris}
+                fermer={fermerPanneauApplicatif}
+                profil={profilApplication.profil}
+              />
+            ) : null}
+            {panneauApplicatif === 'partage' ? (
+              <PanneauPartage
+                contacts={profilApplication.contacts}
+                fermer={fermerPanneauApplicatif}
+              />
+            ) : null}
+            {panneauApplicatif === 'urgence' ? (
+              <PanneauUrgence fermer={fermerPanneauApplicatif} />
+            ) : null}
+          </View>
+        ) : null}
         <View style={styles.boutonsDroite}>
           <BoutonsFlottantsNavigation
             basculerPleinEcran={basculerPleinEcran}
@@ -208,7 +263,15 @@ export function EcranCarte() {
         ) : null}
         {!navigationPleinEcran ? (
           <View style={styles.barreOnglets}>
-            <BarreOnglets ouvrirPanneauTrajet={ouvrirPanneauTrajet} />
+            <BarreOnglets
+              activerSos={() => ouvrirPanneauApplicatif('urgence')}
+              ouvrirPanneauPartage={() => ouvrirPanneauApplicatif('partage')}
+              ouvrirPanneauSignalement={() =>
+                ouvrirPanneauApplicatif('signalement')
+              }
+              ouvrirPanneauTrajet={ouvrirPanneauTrajet}
+              ouvrirPanneauUrgence={() => ouvrirPanneauApplicatif('urgence')}
+            />
           </View>
         ) : null}
         {trajetActif ? (
@@ -259,6 +322,14 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 8,
     zIndex: 24,
+  },
+  panneauApplicatif: {
+    elevation: 1150,
+    left: 14,
+    position: 'absolute',
+    right: 14,
+    top: 154,
+    zIndex: 1150,
   },
   messageChargement: {
     alignItems: 'center',

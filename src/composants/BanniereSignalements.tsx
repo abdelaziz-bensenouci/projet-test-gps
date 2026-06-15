@@ -7,6 +7,7 @@ import {
   View,
 } from 'react-native';
 import type { ReactNode } from 'react';
+import type { CompteursSignalements } from '../types/Signalement';
 
 const SIGNALEMENTS = [
   { libelle: 'eleve', couleur: '#EF4444' },
@@ -15,14 +16,18 @@ const SIGNALEMENTS = [
 ] as const;
 
 type ProprietesBanniereSignalements = {
+  compteurs: CompteursSignalements;
   destinationTexte: string;
   panneauTrajet?: ReactNode;
+  ouvrirProfil: () => void;
   ouvrirPanneauTrajet: () => void;
 };
 
 export function BanniereSignalements({
+  compteurs,
   destinationTexte,
   panneauTrajet,
+  ouvrirProfil,
   ouvrirPanneauTrajet,
 }: ProprietesBanniereSignalements) {
   const animationPanneau = useRef(new Animated.Value(panneauTrajet ? 1 : 0))
@@ -62,12 +67,20 @@ export function BanniereSignalements({
       <View pointerEvents="none" style={styles.degradeBlancBas} />
       <View style={styles.contenuBanniere}>
         <View style={styles.ligne}>
-          <View style={styles.avatar}>
+          <Pressable
+            accessibilityLabel="Ouvrir le profil WalkZen"
+            accessibilityRole="button"
+            onPress={ouvrirProfil}
+            style={styles.avatar}
+          >
             <Text style={styles.avatarTexte}>WZ</Text>
-          </View>
+          </Pressable>
           <View style={styles.texte}>
             <Text style={styles.titre}>AUTOUR DE VOUS</Text>
-            <Text style={styles.compteur}>0 signalement</Text>
+            <Text style={styles.compteur}>
+              {compteurs.eleve + compteurs.modere + compteurs.faible}{' '}
+              signalement
+            </Text>
           </View>
         </View>
         <View style={styles.badges}>
@@ -79,7 +92,9 @@ export function BanniereSignalements({
                   { backgroundColor: signalement.couleur },
                 ]}
               />
-              <Text style={styles.badgeTexte}>0 {signalement.libelle}</Text>
+              <Text style={styles.badgeTexte}>
+                {compteurs[signalement.libelle]} {signalement.libelle}
+              </Text>
             </View>
           ))}
         </View>

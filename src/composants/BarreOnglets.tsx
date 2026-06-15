@@ -6,23 +6,32 @@ const COULEUR_TEXTE = '#647782';
 const TAILLE_ICONE = 21;
 
 type ProprietesBarreOnglets = {
+  ouvrirPanneauPartage: () => void;
+  ouvrirPanneauSignalement: () => void;
   ouvrirPanneauTrajet: () => void;
+  ouvrirPanneauUrgence: () => void;
+  activerSos: () => void;
 };
 
-export function BarreOnglets({ ouvrirPanneauTrajet }: ProprietesBarreOnglets) {
+export function BarreOnglets({
+  activerSos,
+  ouvrirPanneauPartage,
+  ouvrirPanneauSignalement,
+  ouvrirPanneauTrajet,
+  ouvrirPanneauUrgence,
+}: ProprietesBarreOnglets) {
   return (
     <View style={styles.barre}>
       <View pointerEvents="none" style={styles.degradeBleu} />
       <View pointerEvents="none" style={styles.degradeBlanc} />
       <View style={styles.contenuBarre}>
         <Onglet libelle="Trajet" onPress={ouvrirPanneauTrajet} />
-        <Onglet libelle="Signaler" />
-        <Pressable accessibilityRole="button" style={styles.sos}>
+        <Onglet libelle="Signaler" onPress={ouvrirPanneauSignalement} />
+        <Pressable accessibilityRole="button" onPress={activerSos} style={styles.sos}>
           <Text style={styles.texteSos}>SOS</Text>
         </Pressable>
-        {ONGLETS.slice(2).map((onglet) => (
-          <Onglet key={onglet} libelle={onglet} />
-        ))}
+        <Onglet libelle="Partage" onPress={ouvrirPanneauPartage} />
+        <Onglet libelle="Urgence" onPress={ouvrirPanneauUrgence} />
       </View>
     </View>
   );

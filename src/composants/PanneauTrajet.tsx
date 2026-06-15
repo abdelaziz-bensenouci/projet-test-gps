@@ -8,6 +8,7 @@ import { useSuggestionsAdresse } from '../hooks/useSuggestionsAdresse';
 import type { AdresseGeocodee } from '../types/AdresseGeocodee';
 import type { Coordonnees } from '../types/Coordonnees';
 import type { EtatChargement } from '../types/EtatChargement';
+import type { LieuFavori } from '../types/ProfilUtilisateur';
 
 const LIEUX_FAVORIS = ['Palestro', 'Pose', 'Hoche'];
 
@@ -18,6 +19,7 @@ type ProprietesPanneauTrajet = {
   messageRecherche: string | null;
   positionDisponible: boolean;
   positionUtilisateur: Coordonnees | null;
+  lieuxFavoris?: LieuFavori[];
   integre?: boolean;
   fermer: () => void;
   definirDepartTexte: (valeur: string) => void;
@@ -36,6 +38,7 @@ export function PanneauTrajet({
   messageRecherche,
   positionDisponible,
   positionUtilisateur,
+  lieuxFavoris = [],
   integre = false,
   fermer,
   definirDepartTexte,
@@ -64,6 +67,16 @@ export function PanneauTrajet({
     destinationTexte.trim().length > 0;
   const afficherRecherche =
     destinationTexte.trim().length > 0 || Boolean(messageRecherche);
+  const favorisAffiches =
+    lieuxFavoris.length > 0
+      ? lieuxFavoris
+      : LIEUX_FAVORIS.map((lieu) => ({
+          id: lieu,
+          libelle: lieu,
+          adresse: lieu,
+          type: 'destination' as const,
+          coordonnees: null,
+        }));
 
   const choisirDepart = (adresse: AdresseGeocodee) => {
     selectionnerDepart(adresse);
@@ -80,6 +93,28 @@ export function PanneauTrajet({
   const viderChampDestination = () => {
     viderDestination();
     setChampActif(null);
+  };
+  const choisirFavoriDepart = (favori: LieuFavori) => {
+    if (favori.coordonnees) {
+      selectionnerDepart({
+        libelle: favori.adresse,
+        coordonnees: favori.coordonnees,
+      });
+      return;
+    }
+
+    definirDepartTexte(favori.adresse);
+  };
+  const choisirFavoriDestination = (favori: LieuFavori) => {
+    if (favori.coordonnees) {
+      selectionnerDestination({
+        libelle: favori.adresse,
+        coordonnees: favori.coordonnees,
+      });
+      return;
+    }
+
+    definirDestinationTexte(favori.adresse);
   };
 
   return (
@@ -139,16 +174,24 @@ export function PanneauTrajet({
       <View style={styles.section}>
         <Text style={styles.sectionTitre}>LIEUX FAVORIS</Text>
         <View style={styles.favoris}>
-          {LIEUX_FAVORIS.map((lieu) => (
-            <View key={lieu} style={styles.favori}>
+          {favorisAffiches.map((lieu) => (
+            <View key={lieu.id} style={styles.favori}>
               <Text numberOfLines={1} style={styles.texteFavori}>
-                {lieu}
+                {lieu.libelle}
               </Text>
               <View style={styles.actionsFavori}>
-                <Pressable accessibilityRole="button" style={styles.actionFavori}>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => choisirFavoriDepart(lieu)}
+                  style={styles.actionFavori}
+                >
                   <Text style={styles.texteActionFavori}>Départ</Text>
                 </Pressable>
-                <Pressable accessibilityRole="button" style={styles.actionFavori}>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => choisirFavoriDestination(lieu)}
+                  style={styles.actionFavori}
+                >
                   <Text style={styles.texteActionFavori}>Arrivée</Text>
                 </Pressable>
               </View>

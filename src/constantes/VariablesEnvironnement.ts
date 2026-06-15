@@ -6,6 +6,8 @@ function retirerSlashFinal(url: string): string {
 }
 
 export const CLE_MAPTILER = process.env.EXPO_PUBLIC_MAPTILER_KEY;
+export const URL_SUPABASE = process.env.EXPO_PUBLIC_SUPABASE_URL;
+export const CLE_ANON_SUPABASE = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
 export const URL_OSRM = retirerSlashFinal(
   process.env.EXPO_PUBLIC_OSRM_URL ?? URL_OSRM_SECOURS,
