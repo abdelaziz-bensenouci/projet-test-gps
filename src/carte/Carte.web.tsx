@@ -45,6 +45,7 @@ export function Carte({
   const marqueurUtilisateurRef = useRef<maplibregl.Marker | null>(null);
   const [traceAffiche, setTraceAffiche] = useState<Coordonnees[]>([]);
   const positionPrecedenteRef = useRef<Coordonnees | null>(null);
+  const dernierIndexSegmentRef = useRef(0);
   const navigationActive = Boolean(itineraire && traceAffiche.length >= 2);
   const styleCarte = useMemo(
     () => obtenirStyleCarte(modeCarte, navigationActive),
@@ -54,8 +55,6 @@ export function Carte({
   const analyseNavigation = useMemo(() => {
     const positionPrecedente = positionPrecedenteRef.current;
 
-    positionPrecedenteRef.current = positionUtilisateur;
-
     return analyserNavigationGps({
       gps: positionUtilisateur
         ? {
@@ -64,6 +63,7 @@ export function Carte({
             precisionMetres: precisionUtilisateur,
           }
         : null,
+      indexSegmentMinimum: Math.max(0, dernierIndexSegmentRef.current - 1),
       positionPrecedente,
       trace: traceAffiche,
     });
@@ -124,6 +124,7 @@ export function Carte({
   useEffect(() => {
     let actif = true;
     const pointsOsrm = itineraire?.coordonnees ?? [];
+    dernierIndexSegmentRef.current = 0;
     setTraceAffiche([]);
     onTraceItinerairePrete(false);
 
@@ -159,6 +160,17 @@ export function Carte({
       actif = false;
     };
   }, [itineraire, onTraceItinerairePrete]);
+
+  useEffect(() => {
+    positionPrecedenteRef.current = positionUtilisateur;
+
+    if (analyseNavigation?.snapActif) {
+      dernierIndexSegmentRef.current = Math.max(
+        dernierIndexSegmentRef.current,
+        analyseNavigation.indexSegment,
+      );
+    }
+  }, [analyseNavigation, positionUtilisateur]);
 
   useEffect(() => {
     const carte = carteRef.current;

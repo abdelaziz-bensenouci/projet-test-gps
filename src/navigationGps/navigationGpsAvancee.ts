@@ -34,10 +34,12 @@ type ProjectionTrace = {
 
 export function analyserNavigationGps({
   gps,
+  indexSegmentMinimum = 0,
   positionPrecedente,
   trace,
 }: {
   gps: DonneesGpsNavigation | null;
+  indexSegmentMinimum?: number;
   positionPrecedente: Coordonnees | null;
   trace: Coordonnees[];
 }): EtatNavigationGps | null {
@@ -45,7 +47,7 @@ export function analyserNavigationGps({
     return null;
   }
 
-  const projection = projeterSurTrace(gps.position, trace);
+  const projection = projeterSurTrace(gps.position, trace, indexSegmentMinimum);
 
   if (!projection) {
     return null;
@@ -115,10 +117,12 @@ export function calculerDistanceMetres(a: Coordonnees, b: Coordonnees) {
 function projeterSurTrace(
   position: Coordonnees,
   trace: Coordonnees[],
+  indexSegmentMinimum: number,
 ): ProjectionTrace | null {
   let meilleureProjection: ProjectionTrace | null = null;
+  const indexDepart = Math.max(0, Math.min(indexSegmentMinimum, trace.length - 2));
 
-  for (let index = 0; index < trace.length - 1; index += 1) {
+  for (let index = indexDepart; index < trace.length - 1; index += 1) {
     const depart = trace[index];
     const arrivee = trace[index + 1];
     const projection = projeterSurSegment(position, depart, arrivee, index);

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { SafeAreaView, StyleSheet, Text, View } from 'react-native';
 
 import { Carte } from '../carte/Carte';
@@ -83,9 +83,12 @@ export function EcranCarte() {
     setSuiviCameraActif(true);
     setCleRecentrage((cleActuelle) => cleActuelle + 1);
   };
-  const desactiverSuiviCamera = () => {
+  const desactiverSuiviCamera = useCallback(() => {
     setSuiviCameraActif(false);
-  };
+  }, []);
+  const definirTraceItinerairePrete = useCallback((prete: boolean) => {
+    setTraceItinerairePrete(prete);
+  }, []);
   const basculerPleinEcran = () => {
     setPleinEcranModifieParUtilisateur(true);
     setNavigationPleinEcran((pleinEcran) => !pleinEcran);
@@ -176,7 +179,7 @@ export function EcranCarte() {
           modeCarte={modeCarte}
           navigationPleinEcran={navigationPleinEcran}
           onInteractionUtilisateurCarte={desactiverSuiviCamera}
-          onTraceItinerairePrete={setTraceItinerairePrete}
+          onTraceItinerairePrete={definirTraceItinerairePrete}
           positionUtilisateur={positionUtilisateur}
           precisionUtilisateur={precisionUtilisateur}
           signalements={signalements.signalements}
