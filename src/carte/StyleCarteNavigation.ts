@@ -11,6 +11,15 @@ const URL_TUILES_MAPTILER =
 const URL_GLYPHES_MAPTILER =
   CLE_MAPTILER ? `https://api.maptiler.com/fonts/{fontstack}/{range}.pbf?key=${CLE_MAPTILER}` : '';
 
+const CLASSES_PIETONNES_MASQUEES = [
+  'footway',
+  'path',
+  'pedestrian',
+  'steps',
+  'crossing',
+  'sidewalk',
+] as const;
+
 export function creerStyleCarteNavigation(
   modeCarte: ModeCarte,
   navigationActive = false,
@@ -70,54 +79,130 @@ function creerCouchesNavigationMinimalistes(
     })
     .map((couche) => {
       const id = couche.id.toLowerCase();
+      const sourceLayer = String(
+        (couche as Record<string, unknown>)['source-layer'] ?? '',
+      ).toLowerCase();
+      const coucheSansPietons =
+        sourceLayer.includes('transportation') ? masquerClassesPietonnes(couche) : couche;
 
-      if (couche.type === 'background') {
+      if (coucheSansPietons.type === 'background') {
         return {
-          ...couche,
-          paint: { ...couche.paint, 'background-color': '#EEF7FA' },
-        } as typeof couche;
+          ...coucheSansPietons,
+          paint: { ...coucheSansPietons.paint, 'background-color': '#EEF7FA' },
+        } as typeof coucheSansPietons;
       }
 
       if (id.includes('landcover') || id.includes('landuse')) {
         return {
-          ...couche,
-          paint: { ...couche.paint, 'fill-opacity': 0.34 },
-        } as typeof couche;
+          ...coucheSansPietons,
+          paint: { ...coucheSansPietons.paint, 'fill-opacity': 0.34 },
+        } as typeof coucheSansPietons;
       }
 
-      if (couche.type === 'fill' && id.includes('water')) {
+      if (coucheSansPietons.type === 'fill' && id.includes('water')) {
         return {
-          ...couche,
-          paint: { ...couche.paint, 'fill-opacity': 0.42 },
-        } as typeof couche;
+          ...coucheSansPietons,
+          paint: { ...coucheSansPietons.paint, 'fill-opacity': 0.42 },
+        } as typeof coucheSansPietons;
       }
 
-      if (couche.type === 'line' && id.includes('water')) {
+      if (coucheSansPietons.type === 'line' && id.includes('water')) {
         return {
-          ...couche,
-          paint: { ...couche.paint, 'line-opacity': 0.42 },
-        } as typeof couche;
+          ...coucheSansPietons,
+          paint: { ...coucheSansPietons.paint, 'line-opacity': 0.42 },
+        } as typeof coucheSansPietons;
       }
 
-      if (id.includes('pedestrian')) {
+      if (masquerCouchePietonne(id)) {
         return {
-          ...couche,
-          paint: { ...couche.paint, 'line-opacity': 0.22 },
-        } as typeof couche;
+          ...coucheSansPietons,
+          paint: {
+            ...coucheSansPietons.paint,
+            'line-opacity': 0,
+            'text-opacity': 0,
+          },
+        } as unknown as typeof coucheSansPietons;
+      }
+
+      if (coucheSansPietons.type === 'line' && sourceLayer.includes('transportation')) {
+        return appliquerStyleRouteNavigation(coucheSansPietons, id);
       }
 
       if (id.includes('street-label')) {
         return {
-          ...couche,
+          ...coucheSansPietons,
           paint: {
-            ...couche.paint,
+            ...coucheSansPietons.paint,
             'text-color': '#526671',
             'text-halo-color': '#F5FBFD',
             'text-opacity': 0.82,
           },
-        } as typeof couche;
+        } as typeof coucheSansPietons;
       }
 
-      return couche;
+      return coucheSansPietons;
     }) as StyleSpecification['layers'];
+}
+
+function masquerCouchePietonne(id: string) {
+  return CLASSES_PIETONNES_MASQUEES.some((classe) => id.includes(classe));
+}
+
+function masquerClassesPietonnes<T extends StyleSpecification['layers'][number]>(
+  couche: T,
+): T {
+  const filtre = (couche as Record<string, unknown>).filter;
+  const exclusion = [
+    'all',
+    ['!', ['in', ['get', 'class'], ['literal', CLASSES_PIETONNES_MASQUEES]]],
+    ['!', ['in', ['get', 'subclass'], ['literal', CLASSES_PIETONNES_MASQUEES]]],
+  ];
+
+  return {
+    ...couche,
+    filter: filtre ? [...exclusion, filtre] : exclusion,
+  } as T;
+}
+
+function appliquerStyleRouteNavigation<T extends StyleSpecification['layers'][number]>(
+  couche: T,
+  id: string,
+): T {
+  if (id.includes('major-road-fill')) {
+    return {
+      ...couche,
+      paint: {
+        ...couche.paint,
+        'line-color': '#7C8992',
+        'line-opacity': 0.92,
+      },
+    } as unknown as T;
+  }
+
+  if (id.includes('road-fill') || id.includes('road-centerline')) {
+    const paintSansTirets = { ...couche.paint } as Record<string, unknown>;
+    delete paintSansTirets['line-dasharray'];
+
+    return {
+      ...couche,
+      paint: {
+        ...paintSansTirets,
+        'line-color': '#8F9AA2',
+        'line-opacity': 0.88,
+      },
+    } as unknown as T;
+  }
+
+  if (id.includes('road-casing') || id.includes('bridge-underlay')) {
+    return {
+      ...couche,
+      paint: {
+        ...couche.paint,
+        'line-color': '#B9C4CA',
+        'line-opacity': 0.48,
+      },
+    } as unknown as T;
+  }
+
+  return couche;
 }
