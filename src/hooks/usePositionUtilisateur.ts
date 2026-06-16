@@ -24,6 +24,7 @@ export function usePositionUtilisateur(): PositionUtilisateur {
   useEffect(() => {
     let actif = true;
     let abonnement: Location.LocationSubscription | null = null;
+    let dernierePosition: Coordonnees | null = null;
 
     async function chargerPosition() {
       const permission = await Location.requestForegroundPermissionsAsync();
@@ -36,15 +37,17 @@ export function usePositionUtilisateur(): PositionUtilisateur {
         return;
       }
 
-      const position = await Location.getCurrentPositionAsync({});
+      const position = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.BestForNavigation,
+      });
 
       mettreAJourPosition(position);
 
       abonnement = await Location.watchPositionAsync(
         {
-          accuracy: Location.Accuracy.High,
-          distanceInterval: 2,
-          timeInterval: 1000,
+          accuracy: Location.Accuracy.BestForNavigation,
+          distanceInterval: 0,
+          timeInterval: 500,
         },
         mettreAJourPosition,
       );
@@ -55,10 +58,24 @@ export function usePositionUtilisateur(): PositionUtilisateur {
         return;
       }
 
-      setPositionUtilisateur({
+      const prochainePosition = {
         longitude: position.coords.longitude,
         latitude: position.coords.latitude,
+      };
+      const distance = dernierePosition
+        ? calculerDistanceMetres(dernierePosition, prochainePosition)
+        : null;
+      dernierePosition = prochainePosition;
+
+      console.info('[WalkZen GPS]', {
+        accuracy: position.coords.accuracy ?? null,
+        distanceDepuisDerniere: distance,
+        latitude: prochainePosition.latitude,
+        longitude: prochainePosition.longitude,
+        timestamp: position.timestamp,
       });
+
+      setPositionUtilisateur(prochainePosition);
       setDirectionUtilisateur(
         typeof position.coords.heading === 'number' && position.coords.heading >= 0
           ? position.coords.heading
@@ -88,4 +105,20 @@ export function usePositionUtilisateur(): PositionUtilisateur {
     messagePosition,
     precisionUtilisateur,
   };
+}
+
+function calculerDistanceMetres(a: Coordonnees, b: Coordonnees) {
+  const rayonTerre = 6371000;
+  const versRadians = (valeur: number) => (valeur * Math.PI) / 180;
+  const deltaLatitude = versRadians(b.latitude - a.latitude);
+  const deltaLongitude = versRadians(b.longitude - a.longitude);
+  const latitudeA = versRadians(a.latitude);
+  const latitudeB = versRadians(b.latitude);
+  const formule =
+    Math.sin(deltaLatitude / 2) ** 2 +
+    Math.cos(latitudeA) *
+      Math.cos(latitudeB) *
+      Math.sin(deltaLongitude / 2) ** 2;
+
+  return rayonTerre * 2 * Math.atan2(Math.sqrt(formule), Math.sqrt(1 - formule));
 }

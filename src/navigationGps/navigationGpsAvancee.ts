@@ -99,7 +99,13 @@ export function calculerTraceRestante(
   trace: Coordonnees[],
   analyse: EtatNavigationGps | null,
 ): Coordonnees[] {
-  if (!analyse?.snapActif || trace.length < 2) {
+  const progressionPossible =
+    analyse &&
+    !analyse.mauvaisSens &&
+    analyse.distanceTraceMetres !== null &&
+    analyse.distanceTraceMetres <= SEUIL_SNAP_METRES;
+
+  if (!progressionPossible || trace.length < 2) {
     return trace;
   }
 

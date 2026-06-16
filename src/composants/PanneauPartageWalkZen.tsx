@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Entete } from './PanneauSignalementWalkZen';
 import type { PartageLive } from '../services/ServicePartageLive';
@@ -29,7 +29,7 @@ export function PanneauPartageWalkZen({
     <View style={styles.panneau}>
       <Entete fermer={fermer} titre="Partager ma position" />
       <Text style={styles.description}>
-        Choisissez un contact de confiance WalkZen pour lui envoyer un suivi live.
+        Choisissez un contact de confiance pour lui envoyer un suivi en direct de 30 minutes.
       </Text>
       {contacts.length ? (
         <View style={styles.contacts}>
@@ -43,11 +43,15 @@ export function PanneauPartageWalkZen({
                 onPress={() => selectionnerContact(contact.id)}
                 style={[styles.contact, actif && styles.contactActif]}
               >
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarTexte}>
-                    {(contact.nom || contact.identifiantWalkZen || '?').charAt(0).toUpperCase()}
-                  </Text>
-                </View>
+                {contact.avatarUrl ? (
+                  <Image source={{ uri: contact.avatarUrl }} style={styles.avatarImage} />
+                ) : (
+                  <View style={styles.avatar}>
+                    <Text style={styles.avatarTexte}>
+                      {(contact.nom || contact.identifiantWalkZen || '?').charAt(0).toUpperCase()}
+                    </Text>
+                  </View>
+                )}
                 <Text style={styles.contactNom}>{contact.nom || contact.identifiantWalkZen}</Text>
                 {actif ? <View style={styles.badgeSelection} /> : null}
               </Pressable>
@@ -81,12 +85,19 @@ const styles = StyleSheet.create({
   avatar: {
     alignItems: 'center',
     backgroundColor: '#16a6c9',
-    borderRadius: 26,
-    height: 52,
+    borderRadius: 29,
+    height: 58,
     justifyContent: 'center',
-    width: 52,
+    marginBottom: 8,
+    width: 58,
   },
-  avatarTexte: { color: '#FFFFFF', fontSize: 20, fontWeight: '900' },
+  avatarImage: {
+    borderRadius: 29,
+    height: 58,
+    marginBottom: 8,
+    width: 58,
+  },
+  avatarTexte: { color: '#FFFFFF', fontSize: 22, fontWeight: '900' },
   badgeSelection: {
     backgroundColor: '#22C55E',
     borderColor: '#FFFFFF',
@@ -105,29 +116,29 @@ const styles = StyleSheet.create({
     minHeight: 44,
     justifyContent: 'center',
   },
-  boutonStop: { backgroundColor: '#EF4444' },
-  boutonTexte: { color: '#FFFFFF', fontSize: 13, fontWeight: '900' },
+  boutonStop: { backgroundColor: '#ff5a4f' },
+  boutonTexte: { color: '#FFFFFF', fontWeight: '900' },
   contact: {
     alignItems: 'center',
-    backgroundColor: '#EAF1F4',
-    borderColor: '#C8D8E0',
+    backgroundColor: '#f2f8fa',
+    borderColor: '#d9e9ee',
     borderRadius: 22,
     borderWidth: 2,
-    gap: 8,
-    minHeight: 120,
+    justifyContent: 'center',
+    minHeight: 124,
     padding: 10,
     position: 'relative',
     width: 96,
   },
   contactActif: { borderColor: '#16a6c9' },
-  contactNom: { color: '#1F2D38', fontSize: 12, fontWeight: '900', textAlign: 'center' },
-  contacts: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  description: { color: '#657783', fontSize: 13, fontWeight: '800', lineHeight: 18 },
-  inactif: { opacity: 0.56 },
-  message: { color: '#657783', fontSize: 12, fontWeight: '800', lineHeight: 17 },
+  contactNom: { color: '#13252b', fontSize: 13, fontWeight: '900', textAlign: 'center' },
+  contacts: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  description: { color: '#647782', fontSize: 13, fontWeight: '700', lineHeight: 18 },
+  inactif: { opacity: 0.52 },
+  message: { color: '#647782', fontSize: 12, fontWeight: '700', lineHeight: 16 },
   panneau: {
-    backgroundColor: 'rgba(247,249,250,0.98)',
-    borderColor: '#C8D8E0',
+    backgroundColor: '#ffffff',
+    borderColor: '#d9e9ee',
     borderRadius: 24,
     borderWidth: 1,
     elevation: 30,

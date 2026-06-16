@@ -35,7 +35,7 @@ export function SectionProfilCarte({
         </View>
         {valeur ? <Text style={stylesProfil.valeurSection}>{valeur}</Text> : null}
         <Feather
-          color="#1F2D38"
+          color="#13252b"
           name={ouverte ? 'chevron-up' : 'chevron-down'}
           size={18}
         />
@@ -102,21 +102,21 @@ export function BoutonProfilAction({
 
 export const stylesProfil = StyleSheet.create({
   actionTexte: {
-    color: '#EF4444',
+    color: '#ff5a4f',
     fontSize: 12,
     fontWeight: '900',
   },
   avatar: {
     alignItems: 'center',
     backgroundColor: '#16a6c9',
-    borderRadius: 24,
-    height: 48,
+    borderRadius: 21,
+    height: 42,
     justifyContent: 'center',
-    width: 48,
+    width: 42,
   },
   avatarTexte: {
     color: '#FFFFFF',
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '900',
   },
   bouton: {
@@ -128,7 +128,7 @@ export const stylesProfil = StyleSheet.create({
     paddingHorizontal: 12,
   },
   boutonDanger: {
-    backgroundColor: '#EF4444',
+    backgroundColor: '#ff5a4f',
   },
   boutonInactif: {
     opacity: 0.5,
@@ -139,16 +139,15 @@ export const stylesProfil = StyleSheet.create({
     fontWeight: '900',
   },
   champ: {
-    backgroundColor: '#F7F9FA',
-    borderColor: '#D4E1E7',
-    borderRadius: 16,
+    backgroundColor: '#f2f8fa',
+    borderColor: '#d9e9ee',
+    borderRadius: 18,
     borderWidth: 1,
-    color: '#1F2D38',
-    fontSize: 16,
+    color: '#13252b',
+    fontSize: 15,
     fontWeight: '800',
-    lineHeight: 20,
-    minHeight: 44,
-    paddingHorizontal: 11,
+    minHeight: 48,
+    paddingHorizontal: 12,
   },
   champFlexible: {
     flex: 1,
@@ -159,23 +158,24 @@ export const stylesProfil = StyleSheet.create({
     paddingBottom: 6,
   },
   corpsSection: {
-    gap: 8,
+    gap: 10,
     padding: 8,
     paddingTop: 0,
   },
   detailSection: {
-    color: '#657783',
+    color: '#647782',
     fontSize: 12,
     fontWeight: '800',
     lineHeight: 16,
   },
   entete: {
-    alignItems: 'center',
+    alignItems: 'flex-start',
     flexDirection: 'row',
-    gap: 10,
+    gap: 2,
   },
   enteteSection: {
     alignItems: 'center',
+    borderRadius: 18,
     flexDirection: 'row',
     gap: 10,
     minHeight: 72,
@@ -184,17 +184,24 @@ export const stylesProfil = StyleSheet.create({
   },
   enteteTexte: {
     flex: 1,
+    marginTop: 1,
     minWidth: 0,
+    paddingRight: 4,
   },
   fermer: {
     alignItems: 'center',
     backgroundColor: '#ff5a4f',
-    borderRadius: 17,
-    height: 34,
+    borderRadius: 22,
+    height: 44,
     justifyContent: 'center',
-    width: 34,
+    width: 44,
   },
   formulaire: {
+    gap: 10,
+  },
+  grilleStats: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
   },
   iconeSection: {
@@ -206,12 +213,12 @@ export const stylesProfil = StyleSheet.create({
     width: 36,
   },
   infoCarte: {
-    backgroundColor: '#F7F9FA',
-    borderColor: '#D4E1E7',
-    borderRadius: 16,
+    backgroundColor: '#f2f8fa',
+    borderColor: '#d9e9ee',
+    borderRadius: 18,
     borderWidth: 1,
-    gap: 4,
-    padding: 11,
+    gap: 10,
+    padding: 12,
   },
   infoEntete: {
     alignItems: 'center',
@@ -220,15 +227,14 @@ export const stylesProfil = StyleSheet.create({
     justifyContent: 'space-between',
   },
   infoLibelle: {
-    color: '#1F2D38',
-    fontSize: 13,
-    fontWeight: '900',
-  },
-  infoValeur: {
-    color: '#657783',
+    color: '#647782',
     fontSize: 12,
     fontWeight: '800',
-    lineHeight: 16,
+  },
+  infoValeur: {
+    color: '#13252b',
+    fontSize: 14,
+    fontWeight: '900',
   },
   ligneBoutons: {
     alignItems: 'center',
@@ -236,58 +242,92 @@ export const stylesProfil = StyleSheet.create({
     gap: 8,
   },
   message: {
-    color: '#657783',
-    fontSize: 12,
-    fontWeight: '800',
-    lineHeight: 17,
+    color: '#647782',
+    fontSize: 13,
+    fontWeight: '700',
+    lineHeight: 18,
   },
   messageErreur: {
-    color: '#EF4444',
+    color: '#ff5a4f',
     fontSize: 12,
     fontWeight: '900',
     lineHeight: 17,
   },
+  modeButton: {
+    alignItems: 'center',
+    borderRadius: 14,
+    flex: 1,
+    flexDirection: 'row',
+    gap: 6,
+    justifyContent: 'center',
+  },
+  modeButtonActive: {
+    backgroundColor: '#16a6c9',
+  },
+  modeButtonText: {
+    color: '#647782',
+    fontSize: 13,
+    fontWeight: '900',
+  },
+  modeButtonTextActive: {
+    color: '#FFFFFF',
+  },
+  modeSwitch: {
+    backgroundColor: '#f2f8fa',
+    borderColor: '#d9e9ee',
+    borderRadius: 18,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 4,
+    minHeight: 48,
+    padding: 4,
+  },
   panneau: {
-    backgroundColor: 'rgba(247,249,250,0.98)',
-    borderColor: '#C8D8E0',
+    backgroundColor: '#ffffff',
+    borderColor: '#d9e9ee',
     borderRadius: 24,
     borderWidth: 1,
     elevation: 30,
     gap: 12,
     maxHeight: 560,
-    padding: 14,
+    paddingBottom: 14,
+    paddingLeft: 8,
+    paddingRight: 14,
+    paddingTop: 14,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.18,
     shadowRadius: 28,
   },
   section: {
-    backgroundColor: '#EAF1F4',
-    borderColor: '#C8D8E0',
-    borderRadius: 20,
+    backgroundColor: 'transparent',
+    borderColor: 'transparent',
+    borderRadius: 22,
     borderWidth: 1,
+    gap: 8,
     overflow: 'hidden',
   },
   sectionOuverte: {
     borderColor: '#16a6c9',
+    padding: 8,
   },
   sousTitre: {
-    color: '#657783',
-    fontSize: 12,
-    fontWeight: '800',
-    lineHeight: 16,
+    color: '#647782',
+    fontSize: 13,
+    fontWeight: '700',
+    lineHeight: 18,
   },
   texteSection: {
     flex: 1,
     minWidth: 0,
   },
   titre: {
-    color: '#1F2D38',
+    color: '#13252b',
     fontSize: 18,
     fontWeight: '900',
   },
   titreSection: {
-    color: '#1F2D38',
+    color: '#13252b',
     fontSize: 15,
     fontWeight: '900',
   },

@@ -1,5 +1,14 @@
 import type { Coordonnees } from '../types/Coordonnees';
 
+export function estCoordonneesValides(
+  coordonnees: Coordonnees | null | undefined,
+): coordonnees is Coordonnees {
+  return (
+    Number.isFinite(coordonnees?.longitude) &&
+    Number.isFinite(coordonnees?.latitude)
+  );
+}
+
 export function versLngLat(coordonnees: Coordonnees): [number, number] {
   return [coordonnees.longitude, coordonnees.latitude];
 }

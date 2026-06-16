@@ -54,7 +54,6 @@ export async function inscrireUtilisateur(
   });
 
   if (error) throw error;
-  await recupererOuCreerProfil(data.user);
   return data.user;
 }
 
@@ -72,31 +71,12 @@ export async function recupererOuCreerProfil(
     return null;
   }
 
-  const profilExistant = await recupererProfil(utilisateur.id);
-
-  if (profilExistant) {
-    return profilExistant;
-  }
-
-  const profil = {
-    id: utilisateur.id,
-    full_name: String(utilisateur.user_metadata?.full_name ?? ''),
-    email: utilisateur.email ?? '',
-    walkzen_id: creerIdentifiantWalkZen(utilisateur.id),
-    updated_at: new Date().toISOString(),
-  };
-
-  const { data, error } = await supabase
-    .from('profiles')
-    .upsert(profil, { onConflict: 'id' })
-    .select('id,full_name,email,walkzen_id')
-    .single();
-
-  if (error) {
+  const { data: sessionData } = await supabase.auth.getSession();
+  if (!sessionData.session) {
     return null;
   }
 
-  return mapperProfil(data as LigneProfil);
+  return recupererProfil(utilisateur.id);
 }
 
 export async function recupererDonneesUtilisateur() {
@@ -264,7 +244,7 @@ function mapperProfil(ligne: LigneProfil): ProfilUtilisateur {
     id: ligne.id,
     nomComplet: ligne.full_name ?? '',
     email: ligne.email ?? '',
-    identifiantWalkZen: ligne.walkzen_id ?? creerIdentifiantWalkZen(ligne.id),
+    identifiantWalkZen: ligne.walkzen_id ?? '',
   };
 }
 
@@ -329,8 +309,4 @@ function mapperNotification(ligne: Record<string, unknown>): NotificationUtilisa
     type: String(ligne.type ?? 'general'),
     creeLe: String(ligne.created_at ?? ''),
   };
-}
-
-function creerIdentifiantWalkZen(id: string) {
-  return `WZ-${id.replace(/-/g, '').slice(0, 8).toUpperCase()}`;
 }

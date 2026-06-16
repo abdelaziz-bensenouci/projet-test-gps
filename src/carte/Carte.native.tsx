@@ -14,7 +14,11 @@ import {
   ZOOM_NAVIGATION_PLEIN_ECRAN,
   ZOOM_NAVIGATION_REDUIT,
 } from '../constantes/CarteConstantes';
-import { calculerBearing, versLngLat } from '../utilitaires/coordonnees';
+import {
+  calculerBearing,
+  estCoordonneesValides,
+  versLngLat,
+} from '../utilitaires/coordonnees';
 import { creerGeoJsonItineraire } from '../utilitaires/geojson';
 import {
   analyserNavigationGps,
@@ -52,6 +56,9 @@ export function Carte({
     () => obtenirStyleCarte(modeCarte, navigationActive),
     [modeCarte, navigationActive],
   );
+  const positionUtilisateurValide = estCoordonneesValides(positionUtilisateur)
+    ? positionUtilisateur
+    : null;
   const analyseNavigation = useMemo(() => {
     if (!navigationActive) {
       return null;
@@ -60,10 +67,10 @@ export function Carte({
     const positionPrecedente = positionPrecedenteRef.current;
 
     return analyserNavigationGps({
-      gps: positionUtilisateur
+      gps: positionUtilisateurValide
         ? {
             directionDegres: directionUtilisateur,
-            position: positionUtilisateur,
+            position: positionUtilisateurValide,
             precisionMetres: precisionUtilisateur,
           }
         : null,
@@ -74,14 +81,23 @@ export function Carte({
   }, [
     directionUtilisateur,
     navigationActive,
-    positionUtilisateur,
+    positionUtilisateurValide,
     precisionUtilisateur,
     traceAffiche,
   ]);
+  const positionSnappeeValide = estCoordonneesValides(
+    analyseNavigation?.positionAffichee,
+  )
+    ? analyseNavigation.positionAffichee
+    : null;
   const positionUtilisateurAffichee =
-    navigationActive && analyseNavigation?.positionAffichee
-      ? analyseNavigation.positionAffichee
-      : positionUtilisateur;
+    navigationActive
+      ? positionSnappeeValide ?? positionUtilisateurValide
+      : positionUtilisateurValide;
+  const coordonneesMarqueurUtilisateur =
+    navigationActive
+      ? positionUtilisateurAffichee ?? positionUtilisateurValide
+      : positionUtilisateurValide;
   const bearingNavigation = analyseNavigation?.bearingNavigation;
   const traceAfficheeRestante = useMemo(
     () => calculerTraceRestante(traceAffiche, analyseNavigation),
@@ -136,11 +152,11 @@ export function Carte({
   useEffect(() => {
     if (!navigationActive) {
       dernierIndexSegmentRef.current = 0;
-      positionPrecedenteRef.current = positionUtilisateur;
+      positionPrecedenteRef.current = positionUtilisateurValide;
       return;
     }
 
-    positionPrecedenteRef.current = positionUtilisateur;
+    positionPrecedenteRef.current = positionUtilisateurValide;
 
     if (analyseNavigation?.snapActif) {
       dernierIndexSegmentRef.current = Math.max(
@@ -148,7 +164,7 @@ export function Carte({
         analyseNavigation.indexSegment,
       );
     }
-  }, [analyseNavigation, navigationActive, positionUtilisateur]);
+  }, [analyseNavigation, navigationActive, positionUtilisateurValide]);
 
   useEffect(() => {
     const points = itineraire?.coordonnees ?? [];
@@ -220,7 +236,7 @@ export function Carte({
     >
       <Camera
         initialViewState={{
-          center: versLngLat(positionUtilisateur ?? CENTRE_CARTE_INITIAL),
+          center: versLngLat(positionUtilisateurValide ?? CENTRE_CARTE_INITIAL),
           zoom: ZOOM_CARTE_INITIAL,
         }}
         ref={cameraRef}
@@ -268,8 +284,11 @@ export function Carte({
           }}
         />
       </GeoJSONSource>
-      {positionUtilisateurAffichee ? (
-        <MarqueurUtilisateur coordonnees={positionUtilisateurAffichee} />
+      {coordonneesMarqueurUtilisateur ? (
+        <MarqueurUtilisateur
+          key={`position-utilisateur-${coordonneesMarqueurUtilisateur.longitude}-${coordonneesMarqueurUtilisateur.latitude}`}
+          coordonnees={coordonneesMarqueurUtilisateur}
+        />
       ) : null}
       {signalements.map((signalement) => (
         <MarqueurSignalement key={signalement.id} signalement={signalement} />

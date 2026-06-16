@@ -15,7 +15,11 @@ import {
   ZOOM_NAVIGATION_PLEIN_ECRAN,
   ZOOM_NAVIGATION_REDUIT,
 } from '../constantes/CarteConstantes';
-import { calculerBearing, versLngLat } from '../utilitaires/coordonnees';
+import {
+  calculerBearing,
+  estCoordonneesValides,
+  versLngLat,
+} from '../utilitaires/coordonnees';
 import {
   analyserNavigationGps,
   calculerTraceRestante,
@@ -43,6 +47,7 @@ export function Carte({
   const carteRef = useRef<maplibregl.Map | null>(null);
   const marqueursRef = useRef<maplibregl.Marker[]>([]);
   const marqueurUtilisateurRef = useRef<maplibregl.Marker | null>(null);
+  const [cartePrete, setCartePrete] = useState(false);
   const [traceAffiche, setTraceAffiche] = useState<Coordonnees[]>([]);
   const positionPrecedenteRef = useRef<Coordonnees | null>(null);
   const dernierIndexSegmentRef = useRef(0);
@@ -52,6 +57,9 @@ export function Carte({
     [modeCarte, navigationActive],
   );
   const styleAppliqueRef = useRef(styleCarte);
+  const positionUtilisateurValide = estCoordonneesValides(positionUtilisateur)
+    ? positionUtilisateur
+    : null;
   const analyseNavigation = useMemo(() => {
     if (!navigationActive) {
       return null;
@@ -60,10 +68,10 @@ export function Carte({
     const positionPrecedente = positionPrecedenteRef.current;
 
     return analyserNavigationGps({
-      gps: positionUtilisateur
+      gps: positionUtilisateurValide
         ? {
             directionDegres: directionUtilisateur,
-            position: positionUtilisateur,
+            position: positionUtilisateurValide,
             precisionMetres: precisionUtilisateur,
           }
         : null,
@@ -74,14 +82,23 @@ export function Carte({
   }, [
     directionUtilisateur,
     navigationActive,
-    positionUtilisateur,
+    positionUtilisateurValide,
     precisionUtilisateur,
     traceAffiche,
   ]);
+  const positionSnappeeValide = estCoordonneesValides(
+    analyseNavigation?.positionAffichee,
+  )
+    ? analyseNavigation.positionAffichee
+    : null;
   const positionUtilisateurAffichee =
-    navigationActive && analyseNavigation?.positionAffichee
-      ? analyseNavigation.positionAffichee
-      : positionUtilisateur;
+    navigationActive
+      ? positionSnappeeValide ?? positionUtilisateurValide
+      : positionUtilisateurValide;
+  const coordonneesMarqueurUtilisateur =
+    navigationActive
+      ? positionUtilisateurAffichee ?? positionUtilisateurValide
+      : positionUtilisateurValide;
   const bearingNavigation = analyseNavigation?.bearingNavigation;
   const traceAfficheeRestante = useMemo(
     () => calculerTraceRestante(traceAffiche, analyseNavigation),
@@ -97,9 +114,10 @@ export function Carte({
       attributionControl: false,
       container: conteneurRef.current,
       style: styleCarte,
-      center: versLngLat(positionUtilisateur ?? CENTRE_CARTE_INITIAL),
+      center: versLngLat(positionUtilisateurValide ?? CENTRE_CARTE_INITIAL),
       zoom: ZOOM_CARTE_INITIAL,
     });
+    setCartePrete(true);
 
     return () => {
       carteRef.current?.remove();
@@ -177,11 +195,11 @@ export function Carte({
   useEffect(() => {
     if (!navigationActive) {
       dernierIndexSegmentRef.current = 0;
-      positionPrecedenteRef.current = positionUtilisateur;
+      positionPrecedenteRef.current = positionUtilisateurValide;
       return;
     }
 
-    positionPrecedenteRef.current = positionUtilisateur;
+    positionPrecedenteRef.current = positionUtilisateurValide;
 
     if (analyseNavigation?.snapActif) {
       dernierIndexSegmentRef.current = Math.max(
@@ -189,7 +207,7 @@ export function Carte({
         analyseNavigation.indexSegment,
       );
     }
-  }, [analyseNavigation, navigationActive, positionUtilisateur]);
+  }, [analyseNavigation, navigationActive, positionUtilisateurValide]);
 
   useEffect(() => {
     const carte = carteRef.current;
@@ -289,24 +307,49 @@ export function Carte({
   useEffect(() => {
     const carte = carteRef.current;
 
-    if (!carte || !positionUtilisateurAffichee) {
-      marqueurUtilisateurRef.current?.remove();
-      marqueurUtilisateurRef.current = null;
+    if (
+      !carte ||
+      !cartePrete ||
+      !estCoordonneesValides(coordonneesMarqueurUtilisateur)
+    ) {
+      console.info('[WalkZen carte] marqueur utilisateur ignore', {
+        carteDisponible: Boolean(carte),
+        cartePrete,
+        coordonneesValides: estCoordonneesValides(coordonneesMarqueurUtilisateur),
+      });
       return;
     }
+
+    const lngLatMarqueurUtilisateur = versLngLat(coordonneesMarqueurUtilisateur);
+    console.info('[WalkZen carte] marqueur utilisateur update', {
+      distanceTraceMetres: analyseNavigation?.distanceTraceMetres ?? null,
+      indexSegment: analyseNavigation?.indexSegment ?? null,
+      latitude: coordonneesMarqueurUtilisateur.latitude,
+      longitude: coordonneesMarqueurUtilisateur.longitude,
+      navigationActive,
+      snapActif: analyseNavigation?.snapActif ?? false,
+    });
 
     if (!marqueurUtilisateurRef.current) {
       marqueurUtilisateurRef.current = new maplibregl.Marker({
         anchor: 'center',
         element: creerMarqueurUtilisateur(),
       })
-        .setLngLat(versLngLat(positionUtilisateurAffichee))
+        .setLngLat(lngLatMarqueurUtilisateur)
         .addTo(carte);
       return;
     }
 
-    marqueurUtilisateurRef.current.setLngLat(versLngLat(positionUtilisateurAffichee));
-  }, [positionUtilisateurAffichee]);
+    marqueurUtilisateurRef.current.setLngLat(lngLatMarqueurUtilisateur);
+  }, [
+    cartePrete,
+    analyseNavigation?.distanceTraceMetres,
+    analyseNavigation?.indexSegment,
+    analyseNavigation?.snapActif,
+    coordonneesMarqueurUtilisateur?.latitude,
+    coordonneesMarqueurUtilisateur?.longitude,
+    navigationActive,
+  ]);
 
   useEffect(() => {
     const carte = carteRef.current;
