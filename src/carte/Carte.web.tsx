@@ -94,10 +94,6 @@ export function Carte({
   )
     ? analyseNavigation.positionAffichee
     : null;
-  const positionUtilisateurAffichee =
-    navigationActive
-      ? positionSnappeeValide ?? positionUtilisateurValide
-      : positionUtilisateurValide;
   const coordonneesMarqueurUtilisateur = choisirCoordonneesMarqueurUtilisateur({
     dernierePositionGps: dernierePositionGpsMarqueurRef.current,
     dernierePositionMarqueur: dernierePositionMarqueurRef.current,
@@ -106,6 +102,7 @@ export function Carte({
     positionSnappee: positionSnappeeValide,
     snapActif: Boolean(analyseNavigation?.snapActif),
   });
+  const positionUtilisateurAffichee = coordonneesMarqueurUtilisateur;
   const bearingNavigation = analyseNavigation?.bearingNavigation;
   const traceAfficheeRestante = useMemo(
     () => calculerTraceRestante(traceAffiche, analyseNavigation),
@@ -569,12 +566,14 @@ function choisirCoordonneesMarqueurUtilisateur({
     return positionGps;
   }
 
-  const gpsABouge =
-    !dernierePositionGps ||
-    calculerDistanceMetres(dernierePositionGps, positionGps) > 0.1;
-  const snapABouge =
-    !dernierePositionMarqueur ||
-    calculerDistanceMetres(dernierePositionMarqueur, positionSnappee) > 0.1;
+  const distanceGps = dernierePositionGps
+    ? calculerDistanceMetres(dernierePositionGps, positionGps)
+    : null;
+  const distanceSnap = dernierePositionMarqueur
+    ? calculerDistanceMetres(dernierePositionMarqueur, positionSnappee)
+    : null;
+  const gpsABouge = distanceGps === null || distanceGps > 0.1;
+  const snapABouge = distanceSnap === null || distanceSnap > 0.1;
 
   return gpsABouge && !snapABouge ? positionGps : positionSnappee;
 }
