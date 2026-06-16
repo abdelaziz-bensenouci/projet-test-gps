@@ -22,6 +22,7 @@ import {
 } from '../utilitaires/coordonnees';
 import {
   analyserNavigationGps,
+  calculerDistanceMetres,
   calculerTraceRestante,
 } from '../navigationGps/navigationGpsAvancee';
 import { adapterTraceSurAxesRoutiers } from './centrageTrace/adapterTraceSurAxesRoutiers';
@@ -50,6 +51,8 @@ export function Carte({
   const [cartePrete, setCartePrete] = useState(false);
   const [traceAffiche, setTraceAffiche] = useState<Coordonnees[]>([]);
   const positionPrecedenteRef = useRef<Coordonnees | null>(null);
+  const dernierePositionMarqueurRef = useRef<Coordonnees | null>(null);
+  const dernierePositionGpsMarqueurRef = useRef<Coordonnees | null>(null);
   const dernierIndexSegmentRef = useRef(0);
   const navigationActive = Boolean(itineraire && traceAffiche.length >= 2);
   const styleCarte = useMemo(
@@ -95,10 +98,14 @@ export function Carte({
     navigationActive
       ? positionSnappeeValide ?? positionUtilisateurValide
       : positionUtilisateurValide;
-  const coordonneesMarqueurUtilisateur =
-    navigationActive
-      ? positionUtilisateurAffichee ?? positionUtilisateurValide
-      : positionUtilisateurValide;
+  const coordonneesMarqueurUtilisateur = choisirCoordonneesMarqueurUtilisateur({
+    dernierePositionGps: dernierePositionGpsMarqueurRef.current,
+    dernierePositionMarqueur: dernierePositionMarqueurRef.current,
+    navigationActive,
+    positionGps: positionUtilisateurValide,
+    positionSnappee: positionSnappeeValide,
+    snapActif: Boolean(analyseNavigation?.snapActif),
+  });
   const bearingNavigation = analyseNavigation?.bearingNavigation;
   const traceAfficheeRestante = useMemo(
     () => calculerTraceRestante(traceAffiche, analyseNavigation),
@@ -337,10 +344,14 @@ export function Carte({
       })
         .setLngLat(lngLatMarqueurUtilisateur)
         .addTo(carte);
+      dernierePositionGpsMarqueurRef.current = positionUtilisateurValide;
+      dernierePositionMarqueurRef.current = coordonneesMarqueurUtilisateur;
       return;
     }
 
     marqueurUtilisateurRef.current.setLngLat(lngLatMarqueurUtilisateur);
+    dernierePositionGpsMarqueurRef.current = positionUtilisateurValide;
+    dernierePositionMarqueurRef.current = coordonneesMarqueurUtilisateur;
   }, [
     cartePrete,
     analyseNavigation?.distanceTraceMetres,
@@ -349,6 +360,7 @@ export function Carte({
     coordonneesMarqueurUtilisateur?.latitude,
     coordonneesMarqueurUtilisateur?.longitude,
     navigationActive,
+    positionUtilisateurValide,
   ]);
 
   useEffect(() => {
@@ -528,6 +540,43 @@ function creerMarqueur(
   return new maplibregl.Marker({ element })
     .setLngLat(versLngLat(coordonnees))
     .addTo(carte);
+}
+
+function choisirCoordonneesMarqueurUtilisateur({
+  dernierePositionGps,
+  dernierePositionMarqueur,
+  navigationActive,
+  positionGps,
+  positionSnappee,
+  snapActif,
+}: {
+  dernierePositionGps: Coordonnees | null;
+  dernierePositionMarqueur: Coordonnees | null;
+  navigationActive: boolean;
+  positionGps: Coordonnees | null;
+  positionSnappee: Coordonnees | null;
+  snapActif: boolean;
+}) {
+  if (!navigationActive) {
+    return positionGps;
+  }
+
+  if (!positionGps) {
+    return null;
+  }
+
+  if (!snapActif || !positionSnappee) {
+    return positionGps;
+  }
+
+  const gpsABouge =
+    !dernierePositionGps ||
+    calculerDistanceMetres(dernierePositionGps, positionGps) > 0.1;
+  const snapABouge =
+    !dernierePositionMarqueur ||
+    calculerDistanceMetres(dernierePositionMarqueur, positionSnappee) > 0.1;
+
+  return gpsABouge && !snapABouge ? positionGps : positionSnappee;
 }
 
 function creerMarqueurSignalement(
