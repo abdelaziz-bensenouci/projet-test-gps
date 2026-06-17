@@ -17,6 +17,11 @@ export function useSuggestionsAdresse(
   const [chargement, setChargement] = useState(false);
   const [rechercheTerminee, setRechercheTerminee] = useState(false);
   const requeteCourante = useRef(0);
+  const positionUtilisateurRef = useRef(positionUtilisateur);
+
+  useEffect(() => {
+    positionUtilisateurRef.current = positionUtilisateur;
+  }, [positionUtilisateur]);
 
   useEffect(() => {
     const recherche = texte.trim();
@@ -35,7 +40,7 @@ export function useSuggestionsAdresse(
 
     const delai = setTimeout(() => {
       void rechercherSuggestionsAdresse(recherche, {
-        positionReference: positionUtilisateur,
+        positionReference: positionUtilisateurRef.current,
       })
         .then((resultats) => {
           if (requeteCourante.current !== identifiantRequete) {
@@ -63,7 +68,7 @@ export function useSuggestionsAdresse(
     return () => {
       clearTimeout(delai);
     };
-  }, [actif, positionUtilisateur, texte]);
+  }, [actif, texte]);
 
   return {
     aucunResultat:
