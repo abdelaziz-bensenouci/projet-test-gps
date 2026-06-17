@@ -40,12 +40,13 @@ export function EcranCarte() {
     useState<PanneauApplicatif>(null);
   const positionPrecedenteRef = useRef<Coordonnees | null>(null);
   const dernierRecalculNavigationRef = useRef(0);
+  const recherche = useRechercheItineraire();
+  const navigationGpsActive = Boolean(recherche.itineraire);
   const {
     directionUtilisateur,
     positionUtilisateur,
     precisionUtilisateur,
-  } = usePositionUtilisateur();
-  const recherche = useRechercheItineraire();
+  } = usePositionUtilisateur(navigationGpsActive);
   const profilApplication = useProfilApplication();
   const signalements = useSignalements(positionUtilisateur);
   const sos = useSosApplication({

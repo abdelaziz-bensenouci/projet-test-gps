@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Platform } from 'react-native';
 import * as Location from 'expo-location';
 
 import type { Coordonnees } from '../types/Coordonnees';
@@ -12,7 +13,15 @@ type PositionUtilisateur = {
   precisionUtilisateur: number | null;
 };
 
-export function usePositionUtilisateur(): PositionUtilisateur {
+const INTERVALLE_POLL_GPS_NAVIGATION_WEB_MS = 700;
+
+const OPTIONS_GPS_WEB: PositionOptions = {
+  enableHighAccuracy: true,
+  maximumAge: 0,
+  timeout: 10000,
+};
+
+export function usePositionUtilisateur(navigationActive = false): PositionUtilisateur {
   const [positionUtilisateur, setPositionUtilisateur] =
     useState<Coordonnees | null>(null);
   const [directionUtilisateur, setDirectionUtilisateur] = useState<number | null>(null);
@@ -24,7 +33,9 @@ export function usePositionUtilisateur(): PositionUtilisateur {
   useEffect(() => {
     let actif = true;
     let abonnement: Location.LocationSubscription | null = null;
-    let dernierePosition: Coordonnees | null = null;
+    let surveillanceWebId: number | null = null;
+    let pollNavigationWebId: ReturnType<typeof setInterval> | null = null;
+    let pollNavigationWebEnCours = false;
 
     async function chargerPosition() {
       const permission = await Location.requestForegroundPermissionsAsync();
@@ -37,17 +48,50 @@ export function usePositionUtilisateur(): PositionUtilisateur {
         return;
       }
 
+      if (
+        Platform.OS === 'web' &&
+        typeof navigator !== 'undefined' &&
+        navigator.geolocation
+      ) {
+        surveillanceWebId = navigator.geolocation.watchPosition(
+          mettreAJourPositionWeb,
+          () => undefined,
+          OPTIONS_GPS_WEB,
+        );
+
+        if (navigationActive) {
+          pollNavigationWebId = setInterval(() => {
+            if (!actif || pollNavigationWebEnCours) {
+              return;
+            }
+
+            pollNavigationWebEnCours = true;
+            navigator.geolocation.getCurrentPosition(
+              (position) => {
+                pollNavigationWebEnCours = false;
+                mettreAJourPositionWeb(position);
+              },
+              () => {
+                pollNavigationWebEnCours = false;
+              },
+              OPTIONS_GPS_WEB,
+            );
+          }, INTERVALLE_POLL_GPS_NAVIGATION_WEB_MS);
+        }
+        return;
+      }
+
       const position = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.BestForNavigation,
+        accuracy: Location.Accuracy.High,
       });
 
       mettreAJourPosition(position);
 
       abonnement = await Location.watchPositionAsync(
         {
-          accuracy: Location.Accuracy.BestForNavigation,
-          distanceInterval: 0,
-          timeInterval: 500,
+          accuracy: Location.Accuracy.High,
+          distanceInterval: 2,
+          timeInterval: 700,
         },
         mettreAJourPosition,
       );
@@ -58,30 +102,35 @@ export function usePositionUtilisateur(): PositionUtilisateur {
         return;
       }
 
-      const prochainePosition = {
+      appliquerPosition({
         longitude: position.coords.longitude,
         latitude: position.coords.latitude,
-      };
-      const distance = dernierePosition
-        ? calculerDistanceMetres(dernierePosition, prochainePosition)
-        : null;
-      dernierePosition = prochainePosition;
+      }, position.coords.heading, position.coords.accuracy ?? null);
+    }
 
-      console.info('[WalkZen GPS]', {
-        accuracy: position.coords.accuracy ?? null,
-        distanceDepuisDerniere: distance,
-        latitude: prochainePosition.latitude,
-        longitude: prochainePosition.longitude,
-        timestamp: position.timestamp,
-      });
+    function mettreAJourPositionWeb(position: GeolocationPosition) {
+      if (!actif) {
+        return;
+      }
 
+      appliquerPosition({
+        longitude: position.coords.longitude,
+        latitude: position.coords.latitude,
+      }, position.coords.heading, position.coords.accuracy);
+    }
+
+    function appliquerPosition(
+      prochainePosition: Coordonnees,
+      direction: number | null,
+      precision: number | null,
+    ) {
       setPositionUtilisateur(prochainePosition);
       setDirectionUtilisateur(
-        typeof position.coords.heading === 'number' && position.coords.heading >= 0
-          ? position.coords.heading
+        typeof direction === 'number' && direction >= 0
+          ? direction
           : null,
       );
-      setPrecisionUtilisateur(position.coords.accuracy ?? null);
+      setPrecisionUtilisateur(precision);
       setEtatPosition('termine');
     }
 
@@ -94,9 +143,19 @@ export function usePositionUtilisateur(): PositionUtilisateur {
 
     return () => {
       actif = false;
+      if (
+        surveillanceWebId !== null &&
+        typeof navigator !== 'undefined' &&
+        navigator.geolocation
+      ) {
+        navigator.geolocation.clearWatch(surveillanceWebId);
+      }
+      if (pollNavigationWebId !== null) {
+        clearInterval(pollNavigationWebId);
+      }
       abonnement?.remove();
     };
-  }, []);
+  }, [navigationActive]);
 
   return {
     positionUtilisateur,
@@ -105,20 +164,4 @@ export function usePositionUtilisateur(): PositionUtilisateur {
     messagePosition,
     precisionUtilisateur,
   };
-}
-
-function calculerDistanceMetres(a: Coordonnees, b: Coordonnees) {
-  const rayonTerre = 6371000;
-  const versRadians = (valeur: number) => (valeur * Math.PI) / 180;
-  const deltaLatitude = versRadians(b.latitude - a.latitude);
-  const deltaLongitude = versRadians(b.longitude - a.longitude);
-  const latitudeA = versRadians(a.latitude);
-  const latitudeB = versRadians(b.latitude);
-  const formule =
-    Math.sin(deltaLatitude / 2) ** 2 +
-    Math.cos(latitudeA) *
-      Math.cos(latitudeB) *
-      Math.sin(deltaLongitude / 2) ** 2;
-
-  return rayonTerre * 2 * Math.atan2(Math.sqrt(formule), Math.sqrt(1 - formule));
 }
